@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Edit User - {{user.first_name}} {{user.last_name}}{% endblock %}
+{% block content %}
+    <h2>Edit User: {{user.first_name}} {{user.last_name}}</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('ads.users.index')}}">Users</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit: {{user.first_name}} {{user.last_name}}</li>
+        </ol>
+    </nav>
+    <form action="{{url_for('.edit', userId = user.id)}}" method="POST" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName" name="firstName" required maxlength="50" value="{% if request.form.firstName %}{{request.form.firstName}}{% else %}{{user.first_name}}{% endif %}">
+            <div class="invalid-feedback">
+                Please provide a first name.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName" name="lastName" required maxlength="50" value="{% if request.form.lastName %}{{request.form.lastName}}{% else %}{{user.last_name}}{% endif %}">
+            <div class="invalid-feedback">
+                Please provide a first name.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="universityId" class="form-label">University ID</label>
+            <input type="text" class="form-control" id="universityId" disabled value="{{'%08d' % user.id}}">
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" name="email" value="{% if request.form.email %}{{request.form.email}}{% else %}{{user.email}}{% endif %}">
+            <div class="invalid-feedback">
+                Please provide an email address. 
+            </div>
+        </div>
+        <h6>Address</h6>
+        <div class="mb-3">
+            <label for="stAddr" class="form-label">Street Address</label>
+            <input type="text" class="form-control" id="stAddr" name="stAddr" required maxlength="50" value="{% if request.form.stAddr %}{{request.form.stAddr}}{% else %}{{user.street_address}}{% endif %}">
+            <div class="invalid-feedback">
+                Please provide a street address.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="city" class="form-label">City</label>
+            <input type="text" class="form-control" id="city" name="city" required maxlength="50" value="{% if request.form.city %}{{request.form.city}}{% else %}{{user.city}}{% endif %}">
+            <div class="invalid-feedback">
+                Please provide a city.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="state" class="form-label">State</label>
+            <input type="text" class="form-control" id="state" name="state" required minlength="2" maxlength="2" pattern="[A-Z]*" value="{% if request.form.state %}{{request.form.state}}{% else %}{{user.state}}{% endif %}">
+            <div class="invalid-feedback">
+                Please provide a state.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="zipCode" class="form-label">Zip Code</label>
+            <input type="tel" class="form-control" id="zipCode" name="zipCode" required maxlength="5" pattern="[0-9]*" value="{% if request.form.zip %}{{request.form.zip}}{% else %}{{user.zip}}{% endif %}">
+            <div class="invalid-feedback">
+                Please provide a zip code.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="bday">Birthday</label>
+            <input type="date" class="form-control" id="bday" name="bday" required value="{% if request.form.bday %}{{request.form.bday}}{% else %}{{user.bday}}{% endif %}">
+        </div>
+        <input type="hidden" name="userType" value="{{user.type}}">
+        {% if user.type == 'student' %}
+        <div id="studentSection">
+            <h3>Student Information</h3>
+            <div class="mb-3">
+                <label for="advisorId" class="form-label">Student Advisor</label>
+                <select class="form-select" name="advisorId" id="advisorId" required>
+                    <option selected disabled value="">Select an advisor</option>
+                    {% for advisor in advisors %}
+                        <option value="{{advisor.id}}"{% if request.form.advisorId == advisor.id or (not request.form.advisorId and user.advisor_id == advisor.id) %} selected{% endif %}>{{advisor.first_name}} {{advisor.last_name}}</option>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback">
+                    Please select an advisor.
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="program" class="form-label">Program</label>
+                <select class="form-select" name="program" id="program" required>
+                    <option selected disabled value="">Select a program</option>
+                    <option value="masters"{% if request.form.program == "masters" or (not request.form.program and user.program == "masters") %} selected{% endif %}>Masters</option>
+                    <option value="phd"{% if request.form.program == "phd" or (not request.form.program and user.program == "phd") %} selected{% endif %}>PhD</option>
+                </select>
+                <div class="invalid-feedback">
+                    Please select a program.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if user.type == 'alum' %}
+        <div id="alumniSection">
+            <h3>Alumni Information</h3>
+            <div class="mb-3">
+                <label for="program" class="form-label">Program</label>
+                <select class="form-select" name="program" id="program" required>
+                    <option selected disabled value="">Select a program</option>
+                    <option value="masters"{% if request.form.program == "masters" or (not request.form.program and user.program == "masters") %} selected{% endif %}>Masters</option>
+                    <option value="phd"{% if request.form.program == "phd" or (not request.form.program and user.program == "phd") %} selected{% endif %}>PhD</option>
+                </select>
+                <div class="invalid-feedback">
+                    Please select a program.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if user.type == 'applicant' %}
+        <div id="applicantSection">
+            <h3>Applicant Information</h3>
+            <div class="mb-3">
+                <label for="ssn" class="form-label">SSN</label>
+                <input type="tel" class="form-control" id="ssn" name="ssn" required maxlength="9" pattern="[0-9]*" value="{% if request.form.ssn %}{{request.form.ssn}}{% else %}{{user.ssn}}{% endif %}">
+                <div class="invalid-feedback">
+                    Please provide a SSN (no dashes).
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if user.type == 'faculty' %}
+        <div id="facultySection">
+            <h3>Faculty Information</h3>
+            <div class="mb-3">
+                <label for="ssn" class="form-label">Department</label>
+                <select class="form-select" name="department" id="department">
+                    <option selected disabled value="">Select a department</option>
+                    {% for department in departments %}
+                        <option value="{{department.department}}"{% if request.form.department == department.department or (not request.form.department and user.department == department.department) %} selected{% endif %}>{{department.department}}</option>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback">
+                    Please select a department.
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Faculty Roles</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="isAdvisor" name="isAdvisor"{% if request.form.isAdvisor == 1 or user.is_advisor == 1 %} checked{% endif %}>
+                    <label class="form-check-label" for="isAdvisor">
+                        Advisor?
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="isReviewer" name="isReviewer"{% if request.form.isReviewer == 1 or user.is_reviewer == 1 %} checked{% endif %}>
+                    <label class="form-check-label" for="isReviewer">
+                        Reviewer?
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="isInstructor" name="isInstructor"{% if request.form.isInstructor == 1 or user.is_instructor == 1 %} checked{% endif %}>
+                    <label class="form-check-label" for="isInstructor">
+                        Instructor?
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="isAdmissionsChair" name="isAdmissionsChair"{% if request.form.isAdmissionsChairs == 1 or user.is_admissions_chair == 1 %} checked{% endif %}>
+                    <label class="form-check-label" for="isAdmissionsChair">
+                        Admissions Chair?
+                    </label>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Edit User</button>
+        </div>
+    </form>
+{% endblock content %}

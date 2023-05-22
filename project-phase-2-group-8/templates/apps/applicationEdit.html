@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}Edit Application{% endblock %}
+{% block content %}
+    <h2 class="pb-2">Application Form</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('apps.applicants')}}">Applicants</a></li>
+            <li class="breadcrumb-item" aria-current="page">{{student.first_name}} {{student.last_name}}</li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Application</li>
+        </ol>
+    </nav>
+    <div class="btn-group mb-3" role="group">
+        <a href="{{url_for('.viewApplication', university_id=student.id)}}" class="btn btn-outline-primary"><i class="fa-sharp fa-solid fa-file-lines"></i> View Application</a>
+        {% if (session['userType'] in ['gs', 'sysadmin'] or (session['userType'] == 'faculty' and (faculty_info['is_admissions_chair'] or faculty_info['is_reviewer']) )) and appStatus not in ['Pending', 'Incomplete'] %}
+        <a href="{{ url_for('.viewReviewForm', university_id = student.id) }}" class="btn btn-outline-primary"><i class="fa-sharp fa-solid fa-circle-question"></i> View review forms</a>
+        {% endif %}
+    </div>
+    <form action="{{url_for('.postSubmittingAppEdit')}}" method="POST" class="needs-validation" novalidate>
+        <div class="row mb-3">
+            <div class="col">
+                <label>First Name</label>
+                <input type="text" class="form-control" disabled value="{{student.first_name}}">
+            </div>
+            <div class="col">
+                <label>Last Name</label>
+                <input type="text" class="form-control" disabled value="{{student.last_name}}">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label>Student ID</label>
+            <input type="text" class="form-control" disabled value="{{'%08d' % student.id}}">
+        </div>
+        <div class="mb-3">
+            <label>Degree Seeking</label>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="degreeSeeking" id="masters" required value="masters" onchange="degreeChanged(this)"{% if application.form.degreeSeeking == 'masters' %} checked{% endif %}>
+                <label class="form-check-label" for="masters">Masters</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="degreeSeeking" id="phd" required value="phd" onchange="degreeChanged(this)"{% if application.form.degreeSeeking == 'phd' %} checked{% endif %}>
+                <label class="form-check-label" for="phd">PhD</label>
+            </div>
+        </div>
+        <div class="row mb-3 align-items-center">
+            <div class="col">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="mastersCompleted" name="MScheck"{% if application.form.MScheck == '1' %} checked{% endif %}>
+                    <label class="form-check-label" for="mastersCompleted">
+                    Completed a masters?
+                    </label>
+                </div>
+            </div>
+            <div class="col">
+                <label>MS Major</label>
+                <input type="text" class="form-control" name="MSmajor" value="{{application.form.MSmajor}}">
+            </div>
+            <div class="col">
+                <label>MS Year</label>
+                <input type="number" class="form-control" name="MSyear" max="2023" step="1" value="{{application.form.MSyear}}">
+            </div>
+            <div class="col">
+                <label>MS University</label>
+                <input type="text" class="form-control" name="MSuniversity" value="{{application.form.MSuniversity}}">
+            </div>
+            <div class="col">
+                <label>MS GPA</label>
+                <input type="number" class="form-control" name="MSgpa" max="4" min="0" step=".1" value="{{application.form.MSgpa}}">
+            </div>
+        </div>
+        <div class="row mb-3 align-items-center">
+            <div class="col">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="bachelorsCompleted" name="BAcheck" required{% if application.form.BAcheck == '1' %} checked{% endif %}>
+                    <label class="form-check-label" for="bachelorsCompleted">
+                    Completed a bachelors?
+                    </label>
+                </div>
+            </div>
+            <div class="col">
+                <label>BA Major</label>
+                <input type="text" class="form-control" name="BAmajor" required value="{{application.form.BAmajor}}">
+            </div>
+            <div class="col">
+                <label>BA Year</label>
+                <input type="number" class="form-control" name="BAyear" required max="2023" step="1" value="{{application.form.BAyear}}">
+            </div>
+            <div class="col">
+                <label>BA University</label>
+                <input type="text" class="form-control" name="BAuniversity" required value="{{application.form.BAuniversity}}">
+            </div>
+            <div class="col">
+                <label>BA GPA</label>
+                <input type="number" class="form-control" name="BAgpa" required max="4" min="0" step=".1" value="{{application.form.BAgpa}}">
+            </div>
+        </div>
+        <div class="row mb-3" id="greScores">
+            <div class="col">
+                <label>GRE Verbal</label>
+                <input type="number" class="form-control" name="GREverbal" value="{{application.form.GREverbal}}"{% if application.form.degreeSeeking == 'phd' %} required{% endif %}>
+            </div>
+            <div class="col">
+                <label>GRE Quantitative</label>
+                <input type="number" class="form-control" name="GREquantitative" value="{{application.form.GREquantitative}}"{% if application.form.degreeSeeking == 'phd' %} required{% endif %}>
+            </div>
+            <div class="col">
+                <label>GRE Year</label>
+                <input type="number" class="form-control" name="GREyear" max="2023" step="1" value="{{application.form.GREyear}}"{% if application.form.degreeSeeking == 'phd' %} required{% endif %}>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label>GRE Advanced Score</label>
+                <input type="text" class="form-control" name="GREadvancedScore" value="{{application.form.GREadvancedScore}}">
+            </div>
+            <div class="col">
+                <label>GRE Advanced Subject</label>
+                <input type="text" class="form-control" name="GREadvancedSubject" value="{{application.form.GREadvancedSubject}}">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label>TOEFL Score</label>
+                <input type="text" class="form-control" name="TOEFLscore" value="{{application.form.TOEFLscore}}">
+            </div>
+            <div class="col">
+                <label>TOEFL Date</label>
+                <input type="text" class="form-control" name="TOEFLdate" value="{{application.form.TOEFLdate}}">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label>Start Date</label>
+            <select class="form-select" name="startDate" required>
+                <option value="" disabled selected>Select a semester to apply for</option>
+                <option value="Fall 2023"{% if application.form.startDate == 'Fall 2023' %} selected{% endif %}>Fall 2023</option>
+                <option value="Spring 2024"{% if application.form.startDate == 'Spring 2024' %} selected{% endif %}>Spring 2024</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Prior Work</label>
+            <input type="text" class="form-control" name="priorWork" required value="{{application.form.priorWork}}">
+        </div>
+        <div class="row mb-3">
+            <h3>Recommender 1</h3>
+            <div class="col">
+                <label>Name</label>
+                <input type="text" class="form-control" name="r1writer" required value="{{application.form.r1writer}}">
+            </div>
+            <div class="col">
+                <label>Email</label>
+                <input type="email" class="form-control" name="r1email" required value="{{application.form.r1email}}">
+                <a href="{{url_for('.email', university_id = student.id)}}" target="_blank">View email we will send to your recommender</a>
+            </div>
+            <div class="col">
+                <label>Title</label>
+                <input type="text" class="form-control" name="r1title" required value="{{application.form.r1title}}">
+            </div>
+            <div class="col">
+                <label>Affiliation</label>
+                <input type="text" class="form-control" name="r1affiliation" required value="{{application.form.r1affiliation}}">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <h3>Recommender 2</h3>
+            <div class="col">
+                <label>Name</label>
+                <input type="text" class="form-control" name="r2writer" value="{{application.form.r2writer}}" required>
+            </div>
+            <div class="col">
+                <label>Email</label>
+                <input type="email" class="form-control" name="r2email" value="{{application.form.r2email}}" required>
+                <a href="{{url_for('.email', university_id = student.id)}}" target="_blank">View email we will send to your recommender</a>
+            </div>
+            <div class="col">
+                <label>Title</label>
+                <input type="text" class="form-control" name="r2title" value="{{application.form.r2title}}" required>
+            </div>
+            <div class="col">
+                <label>Affiliation</label>
+                <input type="text" class="form-control" name="r2affiliation" value="{{application.form.r2affiliation}}" required>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <h3>Recommender 3</h3>
+            <div class="col">
+                <label>Name</label>
+                <input type="text" class="form-control" name="r3writer" value="{{application.form.r3writer}}" required>
+            </div>
+            <div class="col">
+                <label>Email</label>
+                <input type="email" class="form-control" name="r3email" value="{{application.form.r3email}}" required>
+                <a href="{{url_for('.email', university_id = student.id)}}" target="_blank">View email we will send to your recommender</a>
+            </div>
+            <div class="col">
+                <label>Title</label>
+                <input type="text" class="form-control" name="r3title" value="{{application.form.r3title}}" required>
+            </div>
+            <div class="col">
+                <label>Affiliation</label>
+                <input type="text" class="form-control" name="r3affiliation" value="{{application.form.r3affiliation}}" required>
+            </div>
+        </div>
+        <input type="hidden" class="form-control" name="university_id" value="{{student.id}}">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+{% endblock content %}
+{% block extra_js %}
+    <script type="text/javascript">
+        // on degree seeking change, make #greScores required if phd is selected
+        function degreeChanged(elem) {
+            if (elem.value == "phd") {
+                // set every input in #greScores to required
+                var inputs = document.getElementById("greScores").getElementsByTagName("input");
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].required = true;
+                }
+            } else {
+                // set every input in #greScores to not be required
+                var inputs = document.getElementById("greScores").getElementsByTagName("input");
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].required = false;
+                }
+            }
+        }
+    </script>
+{% endblock extra_js %}

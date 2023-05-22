@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Form1{% endblock %}
+{% block content %}
+    <h1>Form1</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Form1</li>
+        </ol>
+    </nav>
+    <form action="{{url_for('ads.validate_form1')}}" method="POST">
+        {% for i in range (1,13) %}
+        <div class="form-group mb-3">
+            <label for="class{{i}}">Class {{i}}</label>
+            <select class="form-select" name="class{{i}}" id="class{{i}}">
+                <option selected disabled value="">Select a class</option>
+                {% for course in courses %}
+                    <option
+                        value="{{course.id}}"
+                        {% if form1[i-1] and course.id == form1[i-1].course_id %}selected{% endif %}
+                        >{{course.department}} {{course.course_num}} - {{course.title}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endfor %}
+        <div class="form-group mb-3">
+            {% if form1 %}
+            <div class="alert alert-info" role="alert">
+                Submitting Form1 will overwrite your previous submission, even if your new form1 does not meet the requirements.
+            </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Submit Form1</button>
+        </div>
+    </form>
+
+{% endblock content %}

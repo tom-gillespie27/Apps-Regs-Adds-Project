@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}View/Enter Grades{% endblock %}
+{% block content %}
+    <h2 class="pb-2">View/Enter Grades</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">View/Enter Grades</li>
+        </ol>
+    </nav>
+    <div class="bg-light rounded p-2 mb-3">
+        <form method="GET" action="">
+            <div class="input-group mb-2">
+                <span class="input-group-text">Select a class</span>
+                <select class="form-select" name="class" aria-label="Select a class">
+                    <option value=""{% if not request.args.get('class') %} selected{% endif %} disabled>Select a class</option>
+                    {% for class in classes %}
+                        <option value="{{class.id}}" {% if class.id|int == request.args.get('class')|int %}selected{% endif %}>{{class.department}} {{class.course_num}} - {{class.title}}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-outline-secondary" type="submit">View students in class</button>
+            </div>
+        </form>
+    </div>
+    {% if request.args.get('class') %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle" id="students">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">University ID</th>
+                    <th scope="col">First Name</th>
+                    <th scope="col">Last Name</th>
+                    <th scope="col" data-orderable="false" data-searchable="false">Final Grade</th>
+                    <th scope="col" data-orderable="false" data-searchable="false">Transcript</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                    <tr>
+                        <td>{{ '%08d' % student.user_id }}</td>
+                        <td>{{ student.first_name }}</td>
+                        <td>{{ student.last_name }}</td>
+                        <td data-sort="{{ student.grade }}">
+                            {% if student.grade == 'IP' or session.userType in ['gs', 'sysadmin', 'registrar'] %}
+                            <form method="POST" action="">
+                                <div class="input-group mb-3">
+                                    <select class="form-select" name="grade" required>
+                                        <option value="" {% if not student.grade %}selected{% endif %} disabled>Select a grade</option>
+                                        <option value="A" {% if student.grade == 'IP' %}selected{% endif %}>IP</option>
+                                        <option value="A" {% if student.grade == 'A' %}selected{% endif %}>A</option>
+                                        <option value="A-" {% if student.grade == 'A-' %}selected{% endif %}>A-</option>
+                                        <option value="B+" {% if student.grade == 'B+' %}selected{% endif %}>B+</option>
+                                        <option value="B" {% if student.grade == 'B' %}selected{% endif %}>B</option>
+                                        <option value="B-" {% if student.grade == 'B-' %}selected{% endif %}>B-</option>
+                                        <option value="C+" {% if student.grade == 'C+' %}selected{% endif %}>C+</option>
+                                        <option value="C" {% if student.grade == 'C' %}selected{% endif %}>C</option>
+                                        <option value="F" {% if student.grade == 'F' %}selected{% endif %}>F</option>
+                                    </select>
+                                    <input type="hidden" name="student_id" value="{{ student.user_id }}">
+                                    <input type="hidden" name="class_id" value="{{ request.args.get('class') }}">
+                                    <button class="btn btn-outline-secondary" type="submit">Update</button>
+                                </div>
+                            </form>
+                            {% else %}
+                            <select class="form-select" disabled>
+                                <option value="">{{student.grade}}</option>
+                            </select>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('ads.transcript.view', userId = student.user_id) }}" class="btn btn-link">View Transcript</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-muted text-center">Select a class to view students and submit grades.</p>
+    {% endif %}
+    
+{% endblock content %}
+{% block extra_js %}
+    {% if request.args.get('class') %}
+    <script>
+        $(document).ready( function () {
+            $('#students').DataTable({
+                "language": {
+                    "emptyTable": "No students found.",
+                    "zeroRecords": "No matching students found."
+                },
+                order: [[2, 'asc'], [1, 'asc']],
+            });
+        } );
+    </script>
+    {% endif %}
+{% endblock extra_js %}
+

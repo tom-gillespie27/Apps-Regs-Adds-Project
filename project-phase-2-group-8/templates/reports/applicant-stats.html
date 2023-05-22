@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Applicant Statistics{% endblock %}
+{% block content %}
+    <h2 class="pb-2">Applicant Statistics</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('reports.index')}}">Reports</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Applicant Statistics</li>
+        </ol>
+    </nav>
+    <div class="bg-light rounded p-2 mb-3">
+        <form method="GET" action="">
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by degree</span>
+                <select class="form-select" name="degree" aria-label="Filter by degree">
+                    <option value=""{% if not request.args.get('degree') %} selected{% endif %}>All</option>
+                    <option value="masters"{% if request.args.get('degree') == 'masters' %} selected{% endif %}>Masters</option>
+                    <option value="phd"{% if request.args.get('degree') == 'phd' %} selected{% endif %}>PhD</option>
+                </select>
+            </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by semester/year</span>
+                <select class="form-select" name="semester" aria-label="Filter by semester">
+                    <option value=""{% if not request.args.get('semester') %} selected{% endif %}>All</option>
+                    <option value="Fall 2023"{% if request.args.get('semester') == 'Fall 2023' %} selected{% endif %}>Fall 2023</option>
+                    <option value="Spring 2024"{% if request.args.get('semester') == 'Spring 2024' %} selected{% endif %}>Spring 2024</option>
+                </select>
+            </div>
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </form>
+    </div>
+    <div class="row mb-3 g-3">
+        <h3>All Applicants</h3>
+        <div class="col-12">
+            <div class="card text-bg-light text-center">
+                <div class="card-header">Total Applicants</div>
+                <div class="card-body">
+                    <h3 class="card-title mb-0">{{total|default(0)}}</h3>
+                </div>
+            </div>
+        </div>
+        {% if statuses %}
+        <div class="col-5">
+            <div class="card text-bg-light text-center h-100">
+                <div class="card-header">By status</div>
+                <div class="card-body">
+                    <canvas id="appStatus"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if submissions %}
+        <div class="col">
+            <div class="card text-bg-light text-center h-100">
+                <div class="card-header">By submission date</div>
+                <div class="card-body">
+                    <canvas id="appDates"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="row g-3 mt-3">
+        <h3>Admitted Applicants</h3>
+        <div class="col-6">
+            <div class="card text-bg-light text-center">
+                <div class="card-header">Average MS GPA</div>
+                <div class="card-body">
+                    <h3 class="card-title mb-0">
+                        {% if gpas.BAgpa %}
+                        {{gpas.MSgpa|float|round(2)}}
+                        {% else %}
+                        &ndash;
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="card text-bg-light text-center">
+                <div class="card-header">Average BA GPA</div>
+                <div class="card-body">
+                    <h3 class="card-title mb-0">
+                        {% if gpas.BAgpa %}
+                        {{gpas.BAgpa|float|round(2)}}
+                        {% else %}
+                        &ndash;
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        {% if scores[0] %}
+        <div class="col">
+            <div class="card text-bg-light text-center h-100">
+                <div class="card-header">Average test scores</div>
+                <div class="card-body">
+                    <canvas id="testScores"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock content %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const appStatus = document.getElementById('appStatus');
+
+        new Chart(appStatus, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for s in statuses if s.appStatus in ['Under Review', 'Admit', 'Admit With Aid', 'Reject', 'Other', 'Accepted']  %}'{{s.appStatus}}',{% endfor %}],
+                datasets: [{
+                    label: '# of Applicants',
+                    data: [{% for s in statuses if s.appStatus in ['Under Review', 'Admit', 'Admit With Aid', 'Reject', 'Other', 'Accepted']  %}{{s.count}},{% endfor %}],
+                    backgroundColor: [{% for s in statuses if s.appStatus in ['Under Review', 'Admit', 'Admit With Aid', 'Reject', 'Other', 'Accepted']  %}'{{s.color}}',{% endfor %}]
+                }]
+            }
+        });
+        {% if submissions %}
+        const appDates = document.getElementById('appDates');
+
+        new Chart(appDates, {
+            type: 'line',
+            data: {
+                labels: [{% for s in submissions  %}'{{s.date_submitted.strftime('%m/%d/%Y')}}',{% endfor %}],
+                datasets: [{
+                    label: '# of Applicants',
+                    data: [{% for s in submissions  %}{{s.count}},{% endfor %}]
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            beginAtZero: true,
+                            stepSize: 10
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+        {% if scores[0] %}
+        const testScores = document.getElementById('testScores');
+
+        new Chart(testScores, {
+            type: 'bar',
+            data: {
+                labels: ['GRE: Verbal', 'GRE: Quantitative', 'GRE: Advanced', 'TOEFL'],
+                datasets: [{
+                    label: 'Average Score',
+                    data: [{% for s in scores %}{{scores[s]}},{% endfor %}]
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+{% endblock extra_js %}

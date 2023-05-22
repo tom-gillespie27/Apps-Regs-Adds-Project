@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}View Application{% endblock %}
+{% block content %}
+    <h2 class="pb-2">View Application</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('apps.applicants')}}">Applicants</a></li>
+            <li class="breadcrumb-item" aria-current="page">{{student.first_name}} {{student.last_name}}</li>
+            <li class="breadcrumb-item active" aria-current="page">View Application</li>
+        </ol>
+    </nav>
+    <div class="btn-group mb-3" role="group">
+        {% if session.userType in ['gs', 'sysadmin'] or (session.userType == 'faculty' and faculty_info['is_admissions_chair']) %}
+        <a href="{{url_for('.applicationEdit', university_id=student.id)}}" class="btn btn-outline-primary"><i class="fa-sharp fa-solid fa-file-pen"></i> Edit Application</a>
+        {% endif %}
+        {% if (session['userType'] in ['gs', 'sysadmin'] or (session['userType'] == 'faculty' and (faculty_info['is_admissions_chair'] or faculty_info['is_reviewer']) )) and form.appStatus not in ['Pending', 'Incomplete'] %}
+        <a href="{{ url_for('.viewReviewForm', university_id = student.id) }}" class="btn btn-outline-primary"><i class="fa-sharp fa-solid fa-circle-question"></i> View review forms</a>
+        {% endif %}
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label>First Name</label>
+            <input type="text" class="form-control" disabled value="{{student.first_name}}">
+        </div>
+        <div class="col">
+            <label>Last Name</label>
+            <input type="text" class="form-control" disabled value="{{student.last_name}}">
+        </div>
+    </div>
+    <div class="mb-3">
+        <label>Student ID</label>
+        <input type="text" class="form-control" disabled value="{{'%08d' % form.university_id}}">
+    </div>
+    <div class="mb-3">
+        <label>Degree Seeking</label>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="degreeSeeking" id="masters" value="masters"{% if form.degreeSeeking == 'masters' %} checked{% endif %} disabled>
+            <label class="form-check-label" for="masters">Masters</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="degreeSeeking" id="phd" value="phd"{% if form.degreeSeeking == 'phd' %} checked{% endif %} disabled>
+            <label class="form-check-label" for="phd">PhD</label>
+        </div>
+    </div>
+    <div class="row mb-3 align-items-center">
+        <div class="col">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="mastersCompleted"{% if form.MScheck == '1' %} checked{% endif %} disabled>
+                <label class="form-check-label" for="mastersCompleted">
+                Completed a masters?
+                </label>
+            </div>
+        </div>
+        <div class="col">
+            <label>MS Major</label>
+            <input type="text" class="form-control" disabled value="{{form.MSmajor}}">
+        </div>
+        <div class="col">
+            <label>MS Year</label>
+            <input type="number" class="form-control" value="{{form.MSyear}}" disabled>
+        </div>
+        <div class="col">
+            <label>MS University</label>
+            <input type="text" class="form-control" value="{{form.MSuniversity}}" disabled>
+        </div>
+        <div class="col">
+            <label>MS GPA</label>
+            <input type="number" class="form-control" value="{{form.MSgpa}}" disabled>
+        </div>
+    </div>
+    <div class="row mb-3 align-items-center">
+        <div class="col">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="bachelorsCompleted" {% if form.BAcheck == '1' %} checked{% endif %} disabled>
+                <label class="form-check-label" for="bachelorsCompleted">
+                Completed a bachelors?
+                </label>
+            </div>
+        </div>
+        <div class="col">
+            <label>BA Major</label>
+            <input type="text" class="form-control" value="{{form.BAmajor}}" disabled>
+        </div>
+        <div class="col">
+            <label>BA Year</label>
+            <input type="number" class="form-control" value="{{form.BAyear}}" disabled>
+        </div>
+        <div class="col">
+            <label>BA University</label>
+            <input type="text" class="form-control" value="{{form.BAuniversity}}" disabled>
+        </div>
+        <div class="col">
+            <label>BA GPA</label>
+            <input type="number" class="form-control" value="{{form.BAgpa}}" disabled>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label>GRE Verbal</label>
+            <input type="text" class="form-control" value="{{form.GREverbal}}" disabled>
+        </div>
+        <div class="col">
+            <label>GRE Quantitative</label>
+            <input type="text" class="form-control" value="{{form.GREquantitative}}" disabled>
+        </div>
+        <div class="col">
+            <label>GRE Year</label>
+            <input type="number" class="form-control" value="{{form.GREyear}}" disabled>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label>GRE Advanced Score</label>
+            <input type="text" class="form-control" value="{{form.GREadvancedScore}}" disabled>
+        </div>
+        <div class="col">
+            <label>GRE Advanced Subject</label>
+            <input type="text" class="form-control" value="{{form.GREadvancedSubject}}" disabled>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label>TOEFL Score</label>
+            <input type="text" class="form-control" value="{{form.TOEFLscore}}" disabled>
+        </div>
+        <div class="col">
+            <label>TOEFL Date</label>
+            <input type="text" class="form-control" value="{{form.TOEFLdata}}" disabled>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label>Start Date</label>
+        <select class="form-select" disabled>
+            <option value="" disabled selected>Select a semester to apply for</option>
+            <option value="Fall 2023"{% if form.startDate == 'Fall 2023' %} selected{% endif %}>Fall 2023</option>
+            <option value="Spring 2024"{% if form.startDate == 'Spring 2024' %} selected{% endif %}>Spring 2024</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label>Prior Work</label>
+        <input type="text" class="form-control" value="{{form.priorWork}}" disabled>
+    </div>
+    <div class="mb-3">
+
+        <label>Transcript Status</label> <br>
+        Are they mailing it in?: {{ mail_transcript }} <br>
+        Have they uploaded it?: {{ upload }}
+
+        {% if session.userType in ['gs', 'sysadmin'] or (session.userType == 'faculty' and faculty_info['is_admissions_chair']) %}
+
+        <form action="{{url_for('.update_transcript_status')}}" method = "POST">
+            <div class="input-group mb-3">
+                <select id="status" name="status" class="form-select">
+                    <option value="Not Received"{% if form.transcriptStatus == 'Not Received' %} selected{% endif %}>Not Received</option>
+                    <option value="Transcript Received"{% if form.transcriptStatus == 'Transcript Received' %} selected{% endif %}>Transcript Received</option>
+                </select>
+                <input type="submit" name="Update" value = "Update" class="btn btn-outline-primary">
+            </div>
+            <input type="hidden" name="id" value="{{form.university_id}}">
+            <input type="hidden" name="student" value="{{form.university_id}}">
+        </form>
+        {% else %}
+        <input type="text" class="form-control" value="{{form.transcriptStatus}}" disabled>
+        {% endif %}
+    </div>
+    <h3>Recommender 1: {{form.r1status}}</h3>
+    <div class="row">
+        <div class="col">
+            <label>Name</label>
+            <input type="text" class="form-control" value="{{form.r1writer}}" disabled>
+        </div>
+        <div class="col">
+            <label>Email</label>
+            <input type="email" class="form-control" value="{{form.r1email}}" disabled>
+        </div>
+        <div class="col">
+            <label>Title</label>
+            <input type="text" class="form-control" value="{{form.r1title}}" disabled>
+        </div>
+        <div class="col">
+            <label>Affiliation</label>
+            <input type="text" class="form-control" value="{{form.r1affiliation}}" disabled>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label>Letter</label>
+            <textarea class="form-control" disabled>{{form.r1letter}}</textarea>
+            {% if session.userType in ['gs', 'sysadmin'] and form.r1status == 'Not Received' %}
+            <a href="{{url_for('.rec_letter', university_id=form.university_id)}}" class="btn btn-link">Submit Letter</a>
+            {% endif %}
+        </div>
+    </div>
+    <h3>Recommender 2: {{form.r2status}}</h3>
+    <div class="row">
+        <div class="col">
+            <label>Name</label>
+            <input type="text" class="form-control" value="{{form.r2writer}}" disabled>
+        </div>
+        <div class="col">
+            <label>Email</label>
+            <input type="email" class="form-control" value="{{form.r2email}}" disabled>
+        </div>
+        <div class="col">
+            <label>Title</label>
+            <input type="text" class="form-control" value="{{form.r2title}}" disabled>
+        </div>
+        <div class="col">
+            <label>Affiliation</label>
+            <input type="text" class="form-control" value="{{form.r2affiliation}}" disabled>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label>Letter</label>
+            <textarea class="form-control" disabled>{{form.r2letter}}</textarea>
+            {% if session.userType in ['gs', 'sysadmin'] and form.r2status == 'Not Received' %}
+            <a href="{{url_for('.rec_letter', university_id=form.university_id)}}" class="btn btn-link">Submit Letter</a>
+            {% endif %}
+        </div>
+    </div>
+    <h3>Recommender 3: {{form.r3status}}</h3>
+    <div class="row">
+        <div class="col">
+            <label>Name</label>
+            <input type="text" class="form-control" value="{{form.r3writer}}" disabled>
+        </div>
+        <div class="col">
+            <label>Email</label>
+            <input type="email" class="form-control" value="{{form.r3email}}" disabled>
+        </div>
+        <div class="col">
+            <label>Title</label>
+            <input type="text" class="form-control" value="{{form.r3title}}" disabled>
+        </div>
+        <div class="col">
+            <label>Affiliation</label>
+            <input type="text" class="form-control" value="{{form.r3affiliation}}" disabled>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label>Letter</label>
+            <textarea class="form-control" disabled>{{form.r3letter}}</textarea>
+            {% if session.userType in ['gs', 'sysadmin'] and form.r3status == 'Not Received' %}
+            <a href="{{url_for('.rec_letter', university_id=form.university_id)}}" class="btn btn-link">Submit Letter</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}

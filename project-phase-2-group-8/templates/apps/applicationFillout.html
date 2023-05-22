@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Application Form{% endblock %}
+{% block content %}
+    <h2 class="pb-2">Application Form</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Apply</li>
+        </ol>
+    </nav>
+    <form action="{{url_for('.postSubmittingApp')}}" method="POST" class="needs-validation" novalidate>
+        <div class="row mb-3">
+            <div class="col">
+                <label>First Name</label>
+                <input type="text" class="form-control" disabled value="{{student.first_name}}">
+            </div>
+            <div class="col">
+                <label>Last Name</label>
+                <input type="text" class="form-control" disabled value="{{student.last_name}}">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label>Student ID</label>
+            <input type="text" class="form-control" name="university_id" minlength = "1" required disabled value="{{'%08d' % session.userId}}">
+        </div>
+        <div class="mb-3">
+            <label>Degree Seeking</label>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="degreeSeeking" id="masters" required value="masters" onchange="degreeChanged(this)">
+                <label class="form-check-label" for="masters">Masters</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="degreeSeeking" id="phd" required value="phd" onchange="degreeChanged(this)">
+                <label class="form-check-label" for="phd">PhD</label>
+            </div>
+        </div>
+        <div class="row mb-3 align-items-center">
+            <div class="col">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="mastersCompleted" name="MScheck">
+                    <label class="form-check-label" for="mastersCompleted">
+                    Completed a masters?
+                    </label>
+                </div>
+            </div>
+            <div class="col">
+                <label>MS Major</label>
+                <input type="text" class="form-control" name="MSmajor">
+            </div>
+            <div class="col">
+                <label>MS Year</label>
+                <input type="number" class="form-control" name="MSyear" max="2023" step="1">
+            </div>
+            <div class="col">
+                <label>MS University</label>
+                <input type="text" class="form-control" name="MSuniversity">
+            </div>
+            <div class="col">
+                <label>MS GPA</label>
+                <input type="number" class="form-control" name="MSgpa" max="4" min="0" step=".1">
+            </div>
+        </div>
+        <div class="row mb-3 align-items-center">
+            <div class="col">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="bachelorsCompleted" name="BAcheck" required>
+                    <label class="form-check-label" for="bachelorsCompleted">
+                    Completed a bachelors?
+                    </label>
+                </div>
+            </div>
+            <div class="col">
+                <label>BA Major</label>
+                <input type="text" class="form-control" name="BAmajor" required>
+            </div>
+            <div class="col">
+                <label>BA Year</label>
+                <input type="number" class="form-control" name="BAyear" required max="2023" step="1">
+            </div>
+            <div class="col">
+                <label>BA University</label>
+                <input type="text" class="form-control" name="BAuniversity" required>
+            </div>
+            <div class="col">
+                <label>BA GPA</label>
+                <input type="number" class="form-control" name="BAgpa" required max="4" min="0" step=".1">
+            </div>
+        </div>
+        <div class="row mb-3" id="greScores">
+            <div class="col">
+                <label>GRE Verbal</label>
+                <input type="number" class="form-control" name="GREverbal">
+            </div>
+            <div class="col">
+                <label>GRE Quantitative</label>
+                <input type="number" class="form-control" name="GREquantitative">
+            </div>
+            <div class="col">
+                <label>GRE Year</label>
+                <input type="number" class="form-control" name="GREyear" max="2023" step="1">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label>GRE Advanced Score</label>
+                <input type="text" class="form-control" name="GREadvancedScore">
+            </div>
+            <div class="col">
+                <label>GRE Advanced Subject</label>
+                <input type="text" class="form-control" name="GREadvancedSubject">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label>TOEFL Score</label>
+                <input type="text" class="form-control" name="TOEFLscore">
+            </div>
+            <div class="col">
+                <label>TOEFL Date</label>
+                <input type="text" class="form-control" name="TOEFLdate">
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label>Start Date</label>
+            <select class="form-select" name="startDate" required>
+                <option value="" disabled selected>Select a semester to apply for</option>
+                <option value="Fall 2023">Fall 2023</option>
+                <option value="Spring 2024">Spring 2024</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Prior Work</label>
+            <input type="text" class="form-control" name="priorWork" required>
+        </div>
+        <div class="row mb-3">
+            <h3>Recommender 1</h3>
+            <div class="col">
+                <label>Name</label>
+                <input type="text" class="form-control" name="r1writer" required>
+            </div>
+            <div class="col">
+                <label>Email</label>
+                <input type="email" class="form-control" name="r1email" required>
+                <a href="{{url_for('.email', university_id = session.userId)}}" target="_blank">View email we will send to your recommender</a>
+            </div>
+            <div class="col">
+                <label>Title</label>
+                <input type="text" class="form-control" name="r1title" required>
+            </div>
+            <div class="col">
+                <label>Affiliation</label>
+                <input type="text" class="form-control" name="r1affiliation" required>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <h3>Recommender 2</h3>
+            <div class="col">
+                <label>Name</label>
+                <input type="text" class="form-control" name="r2writer" required>
+            </div>
+            <div class="col">
+                <label>Email</label>
+                <input type="email" class="form-control" name="r2email" required>
+                <a href="{{url_for('.email', university_id = session.userId)}}" target="_blank">View email we will send to your recommender</a>
+            </div>
+            <div class="col">
+                <label>Title</label>
+                <input type="text" class="form-control" name="r2title" required>
+            </div>
+            <div class="col">
+                <label>Affiliation</label>
+                <input type="text" class="form-control" name="r2affiliation" required>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <h3>Recommender 3</h3>
+            <div class="col">
+                <label>Name</label>
+                <input type="text" class="form-control" name="r3writer" required>
+            </div>
+            <div class="col">
+                <label>Email</label>
+                <input type="email" class="form-control" name="r3email" required>
+                <a href="{{url_for('.email', university_id = session.userId)}}" target="_blank">View email we will send to your recommender</a>
+            </div>
+            <div class="col">
+                <label>Title</label>
+                <input type="text" class="form-control" name="r3title" required>
+            </div>
+            <div class="col">
+                <label>Affiliation</label>
+                <input type="text" class="form-control" name="r3affiliation" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+{% endblock content %}
+{% block extra_js %}
+    <script type="text/javascript">
+        // on degree seeking change, make #greScores required if phd is selected
+        function degreeChanged(elem) {
+            if (elem.value == "phd") {
+                // set every input in #greScores to required
+                var inputs = document.getElementById("greScores").getElementsByTagName("input");
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].required = true;
+                }
+            } else {
+                // set every input in #greScores to not be required
+                var inputs = document.getElementById("greScores").getElementsByTagName("input");
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].required = false;
+                }
+            }
+        }
+    </script>
+{% endblock extra_js %}

@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% block title %}Add User{% endblock %}
+{% block content %}
+    <h2 class="pb-2">Add User</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('ads.users.index')}}">Users</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add</li>
+        </ol>
+    </nav>
+    <form action="{{url_for('.add')}}" method="POST" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName" name="firstName" required maxlength="50"{% if request.form.firstName %} value="{{request.form.firstName}}"{% endif %}>
+            <div class="invalid-feedback">
+                Please provide a first name.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName" name="lastName" required maxlength="50"{% if request.form.lastName %} value="{{request.form.lastName}}"{% endif %}>
+            <div class="invalid-feedback">
+                Please provide a first name.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" name="email" {% if request.form.email %} value="{{request.form.email}}"{% endif %} required>
+            <div class="invalid-feedback">
+                Please provide an email address. 
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="bday">Birthday</label>
+            <input type="date" class="form-control" id="bday" name="bday" required value="{{request.form.bday}}">
+            <div class="invalid-feedback">
+                Please provide a birthday.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required maxlength="50" {% if request.form.username %} value="{{request.form.username}}"{% endif %}>
+            <div class="invalid-feedback">
+                Please provide username.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required maxlength="50"  {% if request.form.password %} value="{{request.form.password}}"{% endif %}>
+            <div class="invalid-feedback">
+                Please provide password.
+            </div>
+        </div>
+        <h6>Address</h6>
+        <div class="mb-3">
+            <label for="stAddr" class="form-label">Street Address</label>
+            <input type="text" class="form-control" id="stAddr" name="stAddr" required maxlength="50" {% if request.form.stAddr %} value="{{request.form.stAddr}}"{% endif %}>
+            <div class="invalid-feedback">
+                Please provide a street address.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="city" class="form-label">City</label>
+            <input type="text" class="form-control" id="city" name="city" required maxlength="50" {% if request.form.city %} value="{{request.form.city}}"{% endif %}>
+            <div class="invalid-feedback">
+                Please provide a city.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="state" class="form-label">State</label>
+            <input type="text" class="form-control" id="state" name="state" required minlength="2" maxlength="2" pattern="[A-Z]*"{% if request.form.state %} value="{{request.form.state}}"{% endif %}>            <div class="invalid-feedback">
+                Please provide a state.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="zipCode" class="form-label">Zip Code</label>
+            <input type="tel" class="form-control" id="zipCode" name="zipCode" required maxlength="5" pattern = "[0-9]*" {% if request.form.zipCode %} value="{{request.form.zipCode}}"{% endif %}>
+            <div class="invalid-feedback">
+                Please provide a zip code.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="userType" class="form-label">User Type</label>
+            <select class="form-select" name="userType" id="userType" required>
+                <option selected disabled value="">Select a user type</option>
+                {% for key, val in userTypes.items() %}
+                    <option value="{{key}}"{% if request.form.userType == key %} selected{% endif %}>{{val}}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Please select a user type.
+            </div>
+        </div>
+        
+        <div class="collapse" id="studentSection">
+            <h3>Student Information</h3>
+            <div class="mb-3">
+                <label for="advisorId" class="form-label">Student Advisor</label>
+                <select class="form-select" name="advisorId" id="advisorId">
+                    <option selected disabled value="">Select an advisor</option>
+                    {% for advisor in advisors %}
+                        <option value="{{advisor.id}}"{% if request.form.advisorId == advisor.id %} selected{% endif %}>{{advisor.first_name}} {{advisor.last_name}}</option>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback">
+                    Please select an advisor.
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="programStudent" class="form-label">Program</label>
+                <select class="form-select" name="program" id="programStudent">
+                    <option selected disabled value="">Select a program</option>
+                    <option value="masters"{% if request.form.program == "masters" %} selected{% endif %}>Masters</option>
+                    <option value="phd"{% if request.form.program == "phd" %} selected{% endif %}>PhD</option>
+                </select>
+                <div class="invalid-feedback">
+                    Please select a program.
+                </div>
+            </div>
+        </div>
+        <div class="collapse" id="alumniSection">
+            <h3>Alumni Information</h3>
+            <div class="mb-3">
+                <label for="programAlumni" class="form-label">Program</label>
+                <select class="form-select" name="program" id="programAlumni">
+                    <option selected disabled value="">Select a program</option>
+                    <option value="masters"{% if request.form.program == "masters" %} selected{% endif %}>Masters</option>
+                    <option value="phd"{% if request.form.program == "phd" %} selected{% endif %}>PhD</option>
+                </select>
+                <div class="invalid-feedback">
+                    Please select a program.
+                </div>
+            </div>
+        </div>
+        <div class="collapse" id="applicantSection">
+            <h3>Applicant Information</h3>
+            <div class="mb-3">
+                <label for="ssn" class="form-label">SSN</label>
+                <input type="tel" class="form-control" id="ssn" name="ssn" maxlength="9" pattern="[0-9]*" value="{{request.form.ssn}}">
+                <div class="invalid-feedback">
+                    Please provide a SSN (no dashes).
+                </div>
+            </div>
+        </div>
+        <div class="collapse" id="facultySection">
+            <h3>Faculty Information</h3>
+            <div class="mb-3">
+                <label for="ssn" class="form-label">Department</label>
+                <select class="form-select" name="department" id="department">
+                    <option selected disabled value="">Select a department</option>
+                    {% for department in departments %}
+                        <option value="{{department.department}}"{% if request.form.department == department.department %} selected{% endif %}>{{department.department}}</option>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback">
+                    Please select a department.
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Faculty Roles</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="isAdvisor" name="isAdvisor"{% if request.form.isAdvisor == 1 %} checked{% endif %}>
+                    <label class="form-check-label" for="isAdvisor">
+                        Advisor?
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="isReviewer" name="isReviewer"{% if request.form.isReviewer == 1 %} checked{% endif %}>
+                    <label class="form-check-label" for="isReviewer">
+                        Reviewer?
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="isInstructor" name="isInstructor"{% if request.form.isInstructor == 1 %} checked{% endif %}>
+                    <label class="form-check-label" for="isInstructor">
+                        Instructor?
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="isAdmissionsChair" name="isAdmissionsChair"{% if request.form.isAdmissionsChairs == 1 %} checked{% endif %}>
+                    <label class="form-check-label" for="isAdmissionsChair">
+                        Admissions Chair?
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Add User</button>
+        </div>
+    </form>
+{% endblock content %}
+
+{% block extra_js %}
+    <script>
+        const studentCollapse = new bootstrap.Collapse('#studentSection', {
+            toggle: false
+        })
+        const alumniCollapse = new bootstrap.Collapse('#alumniSection', {
+            toggle: false
+        })
+        const applicantCollapse = new bootstrap.Collapse('#applicantSection', {
+            toggle: false
+        })
+        const facultyCollapse = new bootstrap.Collapse('#facultySection', {
+            toggle: false
+        })
+        $('#userType').change(function() {
+            if ($(this).val() == 'student') {
+                studentCollapse.show()
+                alumniCollapse.hide()
+                applicantCollapse.hide()
+                facultyCollapse.hide()
+                $('#advisorId').prop('required', true)
+                $('#programStudent').prop('required', true)
+                $('#programAlumni').prop('required', false)
+                $('#ssn').prop('required', false)
+                $('#department').prop('required', false)
+            }
+            else if ($(this).val() == 'alum') {
+                studentCollapse.hide()
+                alumniCollapse.show()
+                applicantCollapse.hide()
+                facultyCollapse.hide()
+                $('#advisorId').prop('required', false)
+                $('#programStudent').prop('required', false)
+                $('#programAlumni').prop('required', true)
+                $('#ssn').prop('required', false)
+                $('#department').prop('required', false)
+            }
+            else if ($(this).val() == 'applicant') {
+                studentCollapse.hide()
+                alumniCollapse.hide()
+                applicantCollapse.show()
+                facultyCollapse.hide()
+                $('#advisorId').prop('required', false)
+                $('#programStudent').prop('required', false)
+                $('#programAlumni').prop('required', false)
+                $('#ssn').prop('required', true)
+                $('#department').prop('required', false)
+            }
+            else if ($(this).val() == 'faculty') {
+                studentCollapse.hide()
+                alumniCollapse.hide()
+                applicantCollapse.hide()
+                facultyCollapse.show()
+                $('#advisorId').prop('required', false)
+                $('#programStudent').prop('required', false)
+                $('#programAlumni').prop('required', false)
+                $('#ssn').prop('required', false)
+                $('#department').prop('required', true)
+            }
+            else {
+                studentCollapse.hide()
+                alumniCollapse.hide()
+                applicantCollapse.hide()
+                facultyCollapse.hide()
+                $('#advisorId').prop('required', false)
+                $('#programStudent').prop('required', false)
+                $('#programAlumni').prop('required', false)
+                $('#ssn').prop('required', false)
+                $('#department').prop('required', false)
+            }
+        });
+        {% if request.form.userType == 'student' %}
+            studentCollapse.show()
+            alumniCollapse.hide()
+            applicantCollapse.hide()
+            facultyCollapse.hide()
+            $('#advisorId').prop('required', true)
+            $('#programStudent').prop('required', true)
+            $('#programAlumni').prop('required', false)
+            $('#ssn').prop('required', false)
+            $('#department').prop('required', false)
+        {% endif %}
+        {% if request.form.userType == 'alum' %}
+            studentCollapse.hide()
+            alumniCollapse.show()
+            applicantCollapse.hide()
+            facultyCollapse.hide()
+            $('#advisorId').prop('required', false)
+            $('#programStudent').prop('required', false)
+            $('#programAlumni').prop('required', true)
+            $('#ssn').prop('required', false)
+            $('#department').prop('required', false)
+        {% endif %}
+        {% if request.form.userType == 'applicant' %}
+            studentCollapse.hide()
+            alumniCollapse.hide()
+            applicantCollapse.show()
+            facultyCollapse.hide()
+            $('#advisorId').prop('required', false)
+            $('#programStudent').prop('required', false)
+            $('#programAlumni').prop('required', false)
+            $('#ssn').prop('required', true)
+            $('#department').prop('required', false)
+        {% endif %}
+        {% if request.form.userType == 'faculty' %}
+            studentCollapse.hide()
+            alumniCollapse.hide()
+            applicantCollapse.hide()
+            facultyCollapse.show()
+            $('#advisorId').prop('required', false)
+            $('#programStudent').prop('required', false)
+            $('#programAlumni').prop('required', false)
+            $('#ssn').prop('required', false)
+            $('#department').prop('required', true)
+        {% endif %}
+    </script>
+{% endblock extra_js %}

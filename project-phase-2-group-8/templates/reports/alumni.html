@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Alumni{% endblock %}
+{% block content %}
+    <h2 class="pb-2">Alumni</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('reports.index')}}">Reports</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Alumni</li>
+        </ol>
+    </nav>
+    <div class="bg-light rounded p-2 my-3">
+        <form method="GET" action="">
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by semester</span>
+                <select class="form-select" name="semester" aria-label="Filter by semester">
+                    <option value=""{% if not request.args.get('semester') %} selected{% endif %}>All</option>
+                    <option value="fall"{% if request.args.get('semester') == 'fall' %} selected{% endif %}>Fall</option>
+                    <option value="spring"{% if request.args.get('semester') == 'spring' %} selected{% endif %}>Spring</option>
+                </select>
+            </div>
+            {% if years %}
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by year</span>
+                <select class="form-select" name="year" aria-label="Filter by year">
+                    <option value=""{% if not request.args.get('year') %} selected{% endif %}>All</option>
+                    {% for year in years %}
+                        <option value="{{year.year}}"{% if request.args.get('year')|int == year.year|int %} selected{% endif %}>{{year.year}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by degree</span>
+                <select class="form-select" name="degree" aria-label="Filter by degree">
+                    <option value=""{% if not request.args.get('degree') %} selected{% endif %}>All</option>
+                    <option value="masters"{% if request.args.get('degree') == 'masters' %} selected{% endif %}>Masters</option>
+                    <option value="phd"{% if request.args.get('degree') == 'phd' %} selected{% endif %}>PhD</option>
+                </select>
+            </div>
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle" id="students">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">University ID</th>
+                    <th scope="col">First Name</th>
+                    <th scope="col">Last Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Degree</th>
+                    <th scope="col">Graduation Date</th>
+                    <th scope="col" data-orderable="false" data-searchable="false">Transcript</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                    <tr>
+                        <td>{{ '%08d' % student.user_id }}</td>
+                        <td>{{ student.first_name }}</td>
+                        <td>{{ student.last_name }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>{{ programTypes[student.program] }}</td>
+                        <td>{{ student.grad_semester|capitalize }} {{ student.grad_year }}</td>
+                        <td>
+                            <a href="{{ url_for('ads.transcript.view', userId = student.user_id) }}" class="btn btn-link">View Transcript</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock content %}
+
+{% block extra_js %}
+    <script>
+        $(document).ready( function () {
+            $('#students').DataTable({
+                "language": {
+                    "emptyTable": "No students found.",
+                    "zeroRecords": "No matching students found."
+                },
+                order: [[2, 'asc'], [1, 'asc']],
+            });
+        } );
+    </script>
+{% endblock extra_js %}

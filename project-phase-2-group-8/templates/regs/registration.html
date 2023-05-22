@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Registration{% endblock %}
+{% block content %}
+    <h2>Registration: {{semester[0]}} {{semester[1]}}</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Registration</li>
+        </ol>
+    </nav>
+    <div class="bg-light rounded p-2 mb-3">
+        <form method="GET" action="" class="needs-validation" novalidate>
+            <div class="input-group mb-2">
+                <span class="input-group-text">Department</span>
+                <select class="form-select" name="department" aria-label="Filter by department">
+                    <option value=""{% if not request.args.get('department') %} selected{% endif %}>All</option>
+                    {% for dept in departments %}
+                        <option value="{{dept['department']}}" {% if dept['department'] == request.args.get('department') %}selected{% endif %}>{{dept['department']}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text">Course Number</span>
+                <input type="number" class="form-control" name="course_num"{% if request.args.get('course_num') %} value="{{request.args.get('course_num')}}"{% endif %}>
+            </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text">Course Title</span>
+                <input type="text" class="form-control" name="course_title"{% if request.args.get('course_title') %} value="{{request.args.get('course_title')}}"{% endif %}>
+            </div>
+            <button class="btn btn-outline-secondary" type="submit">Search</button>
+        </form>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-4">
+            <h4>Classes Offered</h4>
+            {% if not classes %}
+            <p>No classes found</p>
+            {% else %}
+            <div class="row g-4">
+                <!-- * from sections and course -->
+                {% for class in classes %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">{{class["title"]}} - {{class["department"]}} {{class["course_num"]}}</h5>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><strong>Credit Hours:</strong> {{class['credits']}}</li>
+                            <li class="list-group-item"><strong>Semester:</strong> {{class['csem']|capitalize}} {{class['cyear']}}</li>
+                            <li class="list-group-item"><strong>Day of Week:</strong> {{class['day_of_week']}}</li>
+                            <li class="list-group-item"><strong>Class Time:</strong> {{class['class_time']}}</li>
+                            <li class="list-group-item"><strong>Location:</strong> {{class['room']}} (capacity: {{class['room_capacity']}})</li>
+                            <li class="list-group-item"><strong>Instructor:</strong> {{instructor_list[class['fid']]['first_name']}} {{instructor_list[class['fid']]['last_name']}}</li>
+                            {% if class['prereq']|length > 0 %}
+                            <li class="list-group-item">
+                                <strong>Prerequisites:</strong>
+                                {% for prereq in class['prereq'] %}
+                                    {{prereq['department'] ~ " " ~ prereq['course_num']}}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </li>
+                            {% endif %}
+                        </ul>
+                        <div class="card-footer">
+                            <form action="{{ url_for('.add', id=session['id']) }}" method = "POST">
+                                {% for key, value in class.items() if key != 'prereq' %}
+                                    <input type="hidden" name="{{key}}" value="{{value}}"/>
+                                {% endfor %}
+                                
+                                {% set count = namespace(value=0) %}
+                                {% for prereq in class['prereq'] %}
+                                    {% set count.value = count.value + 1 %}
+                                    <input type="hidden" name="prereq{{count.value}}" value="{{prereq.department + ' ' + prereq.course_num|string()}}"/>
+                                {% endfor %}
+                                <input type="hidden" name="total_prereq" value="{{class['prereq']|length}}"/>
+                                <button type="submit" class="btn btn-primary">Add</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {%endif%}
+        </div>
+        <div class="col-12 col-md-4">
+            <h4>Current Registration</h4>
+            {% if not session["registration"] %}
+            <p>No classes found</p>
+            {% else %}
+            <div class="row g-4 mb-3">
+                <!-- * from sections and course -->
+                {% for class in registered %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">{{class["title"]}} - {{class["department"]}} {{class["course_num"]}}</h5>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><strong>Credit Hours:</strong> {{class['credits']}}</li>
+                            <li class="list-group-item"><strong>Semester:</strong> {{class['csem']|capitalize}} {{class['cyear']}}</li>
+                            <li class="list-group-item"><strong>Day of Week:</strong> {{class['day_of_week']}}</li>
+                            <li class="list-group-item"><strong>Class Time:</strong> {{class['class_time']}}</li>
+                            <li class="list-group-item"><strong>Location:</strong> {{class['room']}} (capacity: {{class['room_capacity']}})</li>
+                            <li class="list-group-item"><strong>Instructor:</strong> {{class['instructor']['first_name']}} {{class['instructor']['last_name']}}</li>
+                            {% if class['prereq']|length > 0 %}
+                            <li class="list-group-item">
+                                <strong>Prerequisites:</strong>
+                                {% for prereq in class['prereq'] %}
+                                    {{prereq['department'] ~ " " ~ prereq['course_num']}}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </li>
+                            {% endif %}
+                        </ul>
+                        <div class="card-footer">
+                            <form action="{{ url_for('.remove', id=session['id']) }}" method = "POST">
+                                {% for key, value in class.items() if key != 'prereq' %}
+                                    <input type="hidden" name="{{key}}" value="{{value}}"/>
+                                {% endfor %}
+                                
+                                {% set count = namespace(value=0) %}
+                                {% for prereq in class['prereq'] %}
+                                    {% set count.value = count.value + 1 %}
+                                    <input type="hidden" name="prereq{{count.value}}" value="{{prereq.department + ' ' + prereq.course_num|string()}}"/>
+                                {% endfor %}
+                                <input type="hidden" name="total_prereq" value="{{class['prereq']|length}}"/>
+                                <button type="submit" class="btn btn-primary">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <form action="{{url_for('.checkout', id=session['id'])}}" method="POST">
+                <button type="submit" class="btn btn-primary">Checkout</button>
+            </form>
+            {% endif %}
+        </div>
+        <div class="col-12 col-md-4">
+            <h4>Classes Enrolled</h4>
+            {% if not schedule %}
+            <p>No classes enrolled</p>
+            {% else %}
+            <div class="row g-4">
+                <!-- * from sections and course -->
+                {% for class in schedule %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">{{class["title"]}} - {{class["department"]}} {{class["course_num"]}}</h5>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><strong>Grade:</strong> {{class['grade']}}</li>
+                            <li class="list-group-item"><strong>Credit Hours:</strong> {{class['credits']}}</li>
+                            <li class="list-group-item"><strong>Day of Week:</strong> {{class['day_of_week']}}</li>
+                            <li class="list-group-item"><strong>Class Time:</strong> {{class['class_time']}}</li>
+                            <li class="list-group-item"><strong>Location:</strong> {{class['room']}} (capacity: {{class['room_capacity']}})</li>
+                        </ul>
+                        <div class="card-footer">
+                            <form action="{{url_for('.drop')}}" method = 'POST'>
+                                <input type="hidden" name = "stud_id" value="{{class['user_id']}}">
+                                <input type="hidden" name = "cid" value="{{class['course_id']}}">
+                                <input type="hidden" name = "csem" value="{{class['semester']}}">
+                                <input type="hidden" name = "cyear" value="{{class['year']}}">
+                                <button type="submit" class="btn btn-primary">Drop Class</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}

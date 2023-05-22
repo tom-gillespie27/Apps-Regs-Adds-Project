@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Advising Form{% endblock %}
+{% block content %}
+    <h1>Advising Form</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Advising Form</li>
+        </ol>
+    </nav>
+    <p>Submit this form with the classes you expect to take your first semester. Once your advisor approves your submission, your advising hold will be lifted and you will be able to register for courses.</p>
+    <form action="{{url_for('.advising_form')}}" method="POST">
+        <div id="courses">
+            <div class="form-group mb-3" id="course1">
+                <label>Class 1</label>
+                <div class="input-group mb-3">
+                    <select class="form-select" name="class[]">
+                        <option selected disabled value="">Select a class</option>
+                        {% for course in courses %}
+                            <option value="{{course.id}}">{{course.department}} {{course.course_num}} - {{course.title}}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-outline-secondary rm-btn d-none" type="button"  onclick="removeCourse(1)"><i class="fa-sharp fa-solid fa-trash-xmark"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="form-group mb-3">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addCourse()" id="addBtn"><i class="fa-sharp fa-solid fa-plus"></i> Add Course</button>
+        </div>
+        <div class="form-group mb-3">
+            <button type="submit" class="btn btn-primary">Submit Advising Form</button>
+        </div>
+    </form>
+
+{% endblock content %}
+{% block extra_js %}
+    <script>
+        const maxCourses = {{courses|length}}; // max number of courses
+        const courses = [
+            {% for course in courses %}
+                {
+                    id: {{course.id}},
+                    department: "{{course.department}}",
+                    course_num: "{{course.course_num}}",
+                    title: "{{course.title}}"
+                },
+            {% endfor %}
+        ];
+
+        function removeCourse(courseNum) {
+            // count number of courses
+            let courseCount = document.getElementById("courses").childElementCount;
+
+            // if there is only one course, don't remove it
+            if (courseCount == 1) {
+                return;
+            }
+
+            // remove the course
+            let course = document.getElementById("course" + courseNum);
+            course.remove();
+
+            // hide the remove button if there is only one course left
+            if (courseCount == 2) {
+                let rmBtn = document.getElementsByClassName("rm-btn")[0];
+                rmBtn.classList.add("d-none");
+            }
+
+            // renumber the courses
+            let courseChilds = document.getElementById("courses").children;
+            for (let i = 0; i < courseChilds.length; i++) {
+                let course = courseChilds[i];
+                course.id = "course" + (i + 1);
+                course.children[0].innerHTML = "Class " + (i + 1);
+                course.children[1].children[1].setAttribute("onclick", "removeCourse(" + (i + 1) + ")");
+            }
+
+            // check if the add button is hidden
+            let addBtn = document.getElementById("addBtn");
+            if (addBtn.classList.contains("d-none")) {
+                addBtn.classList.remove("d-none");
+            }
+        }
+        function addCourse() {
+            // count number of courses
+            let courseCount = document.getElementById("courses").childElementCount;
+
+            // if there are already max courses, don't add another
+            if (courseCount == maxCourses) {
+                // hide the add button
+                let addBtn = document.getElementById("addBtn");
+                addBtn.classList.add("d-none");
+                return;
+            }
+
+            // show the remove button if it is hidden 
+            let rmBtn = document.getElementsByClassName("rm-btn")[0];
+            rmBtn.classList.remove("d-none");
+
+            // create the new course
+            let course = document.createElement("div");
+            course.classList.add("form-group");
+            course.classList.add("mb-3");
+            course.id = "course" + courseCount;
+
+            // create the label
+            let label = document.createElement("label");
+            label.innerHTML = "Class " + courseCount;
+            
+            // create the input group
+            let inputGroup = document.createElement("div");
+            inputGroup.classList.add("input-group");
+            inputGroup.classList.add("mb-3");
+
+            // create the select
+            let select = document.createElement("select");
+            select.classList.add("form-select");
+            select.name = "class[]";
+
+            // create the option
+            let option = document.createElement("option");
+            option.selected = true;
+            option.disabled = true;
+            option.value = "";
+            option.innerHTML = "Select a class";
+
+            // create the remove button
+            let rmBtn2 = document.createElement("button");
+            rmBtn2.classList.add("btn");
+            rmBtn2.classList.add("btn-outline-secondary");
+            rmBtn2.classList.add("rm-btn");
+            rmBtn2.type = "button";
+            rmBtn2.setAttribute("onclick", "removeCourse(" + courseCount + ")");
+
+            // create the icon
+            let icon = document.createElement("i");
+            icon.classList.add("fa-sharp");
+            icon.classList.add("fa-solid");
+            icon.classList.add("fa-trash-xmark");
+            
+            // append the icon to the button
+            rmBtn2.appendChild(icon);
+
+            // append the option to the select
+            select.appendChild(option);
+
+            // append the select to the input group
+            inputGroup.appendChild(select);
+
+            // append the remove button to the input group
+            inputGroup.appendChild(rmBtn2);
+
+            // append the label to the course
+            course.appendChild(label);
+
+            // append the input group to the course
+            course.appendChild(inputGroup);
+
+            // append the course to the courses div
+            document.getElementById("courses").appendChild(course);
+
+            // add the courses to the select
+            for (let i = 0; i < courses.length; i++) {
+                let course = courses[i];
+
+                // create the option
+                let option = document.createElement("option");
+                option.value = course.id;
+                option.innerHTML = course.department + " " + course.course_num + " - " + course.title;
+
+                // append the option to the select
+                select.appendChild(option);
+            }
+
+            // renumber the courses
+            let courseChilds = document.getElementById("courses").children;
+            for (let i = 0; i < courseChilds.length; i++) {
+                let course = courseChilds[i];
+                course.id = "course" + (i + 1);
+                course.children[0].innerHTML = "Class " + (i + 1);
+                course.children[1].children[1].setAttribute("onclick", "removeCourse(" + (i + 1) + ")");
+            }
+
+            // check if the max number of courses has been reached
+            if ((courseCount + 1) >= maxCourses) {
+                // hide the add button
+                document.getElementById("addBtn").classList.add("d-none");
+            }
+        }
+    </script>
+{% endblock extra_js %}

@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block title %}Applicants{% endblock %}
+{% block content %}
+    <h2 class="pb-2">Applicants</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Applicants</li>
+        </ol>
+    </nav>
+    <div class="bg-light rounded p-2 mb-3">
+        <form method="GET" action="">
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by degree</span>
+                <select class="form-select" name="degree" aria-label="Filter by degree">
+                    <option value=""{% if not request.args.get('degree') %} selected{% endif %}>All</option>
+                    <option value="masters"{% if request.args.get('degree') == 'masters' %} selected{% endif %}>Masters</option>
+                    <option value="phd"{% if request.args.get('degree') == 'phd' %} selected{% endif %}>PhD</option>
+                </select>
+            </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by start date</span>
+                <select class="form-select" name="admitDate" aria-label="Filter by start date">
+                    <option value=""{% if not request.args.get('admitDate') %} selected{% endif %}>All</option>
+                    <option value="Fall 2023"{% if request.args.get('admitDate') == 'Fall 2023' %} selected{% endif %}>Fall 2023</option>
+                    <option value="Spring 2024"{% if request.args.get('admitDate') == 'Spring 2024' %} selected{% endif %}>Spring 2024</option>
+                </select>
+            </div>
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by status</span>
+                <select class="form-select" name="status" aria-label="Filter by status">
+                    <option value=""{% if not request.args.get('status') %} selected{% endif %}>All</option>
+                    <option value="admitted"{% if request.args.get('status') == 'admitted' %} selected{% endif %}>Admitted</option>
+                </select>
+            </div>
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover" id="applicants">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">University ID</th>
+                    <th scope="col">First Name</th>
+                    <th scope="col">Last Name</th>
+                    {% if (session['userType'] == 'faculty' and (facultyType['admissions_chair'] or facultyType['advisor'] or facultyType['reviewer'])) or session['userType'] in ['sysadmin', 'gs'] %}
+                    <th scope="col" data-searchable="false">Materials</th>
+                    {% endif %}
+                    <th scope="col" data-orderable="false" data-searchable="false">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for applicant in applicants %}
+                    <tr>
+                        <td>{{ '%08d' % applicant.university_id }}</td>
+                        <td>{{ applicant.first_name }}</td>
+                        <td>{{ applicant.last_name }}</td>
+                        {% if (session['userType'] == 'faculty' and (facultyType['admissions_chair'] or facultyType['advisor'] or facultyType['reviewer'])) or session['userType'] in ['sysadmin', 'gs'] %}
+                        <td>
+                            <ul class="fa-ul">
+                                <li>
+                                    <span class="fa-li">
+                                        {% if applicant.appStatus in ['Pending', 'Incomplete'] %}
+                                            <i class="fa-regular fa-square text-warning"></i>
+                                        {% elif applicant.appStatus in ['Admit', 'Admit With Aid', 'Accepted'] %}
+                                            <i class="fa-solid fa-check-square text-success"></i>
+                                        {% else %}
+                                            <i class="fa-regular fa-square"></i>
+                                        {% endif %}
+                                    </span>
+                                    Application: {{applicant.appStatus}} <br>
+                                     
+                                    
+                                </li>
+                                {% if applicant.appStatus != 'Pending' %}
+                                <li>
+                                    <span class="fa-li">
+                                        {% if applicant.app.transcriptStatus == 'Transcript Received' %}
+                                            <i class="fa-solid fa-check-square text-success"></i>
+                                        {% else %}
+                                            <i class="fa-regular fa-square text-warning"></i>
+                                        {% endif %}
+                                    </span>
+                                    Transcript: {{applicant.app.transcriptStatus}}
+
+                                    {% if applicant.appStatus not in ['Accepted', 'Matriculated', 'Admit', 'Admit With Aid', 'Reject'] and (session.userType in ['gs', 'sysadmin'] or (session.userType == 'faculty' and facultyType['admissions_chair'])) %}
+
+                                    <br />
+                                    <a href="javascript:transcriptStatus({{applicant.university_id}},'{{applicant.first_name}} {{applicant.last_name}}','{{applicant.app.transcriptStatus}}')">Update</a>
+                                    {% endif %}
+                                </li>
+                                <li>
+                                    <span class="fa-li">
+                                        {% if applicant.app.r1status == 'Received' %}
+                                            <i class="fa-solid fa-check-square text-success"></i>
+                                        {% else %}
+                                            <i class="fa-regular fa-square text-warning"></i>
+                                        {% endif %}
+                                    </span>
+                                    Recommendation Letter 1: {{applicant.app.r1status}}
+                                </li>
+                                <li>
+                                    <span class="fa-li">
+                                        {% if applicant.app.r2status == 'Received' %}
+                                            <i class="fa-solid fa-check-square text-success"></i>
+                                        {% else %}
+                                            <i class="fa-regular fa-square text-warning"></i>
+                                        {% endif %}
+                                    </span>
+                                    Recommendation Letter 2: {{applicant.app.r2status}}
+                                </li>
+                                <li>
+                                    <span class="fa-li">
+                                        {% if applicant.app.r3status == 'Received' %}
+                                            <i class="fa-solid fa-check-square text-success"></i>
+                                        {% else %}
+                                            <i class="fa-regular fa-square text-warning"></i>
+                                        {% endif %}
+                                    </span>
+                                    Recommendation Letter 3: {{applicant.app.r3status}}
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </td>
+                        {% endif %}
+                        <td>
+                            {% if applicant.form %}
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('.viewApplication', university_id = applicant.university_id) }}" class="btn btn-outline-primary btn-sm mb-2"><i class="fa-sharp fa-solid fa-file-lines"></i> View Application</a>
+                                {% if session.userType in ['gs', 'sysadmin'] or (session.userType == 'faculty' and facultyType['admissions_chair']) %}
+                                <a href="{{ url_for('.applicationEdit', university_id = applicant.university_id) }}" class="btn btn-outline-primary btn-sm mb-2"><i class="fa-sharp fa-solid fa-file-pen"></i> Edit Application</a>
+                                {% endif %}
+
+                            </div>
+                            <br />
+                            {% endif %}
+                            {% if (session['userType'] in ['gs', 'sysadmin'] or (session['userType'] == 'faculty' and (facultyType['admissions_chair'] or facultyType['reviewer'] or facultyType['advisor']) )) and applicant.appStatus not in ['Pending', 'Incomplete'] %}
+                            <a href="{{ url_for('.viewReviewForm', university_id = applicant.university_id) }}" class="btn btn-outline-primary btn-sm mb-2"><i class="fa-sharp fa-solid fa-circle-question"></i> View review forms</a>
+
+                            <br />
+                            {% endif %}
+                            {% if applicant.appStatus == 'Accepted' and session.userType in ['gs', 'sysadmin'] %}
+                            <a href="javascript:matriculateStudent({{applicant.university_id}},'{{applicant.first_name}} {{applicant.last_name}}')" class="btn btn-outline-primary btn-sm mb-2"><i class="fa-sharp fa-solid fa-circle-check"></i> Matriculate student</a>
+                            <br />
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if (session['userType'] == 'faculty' and facultyType['admissions_chair']) or session['userType'] in ['sysadmin', 'gs'] %}
+    <div class="modal fade" id="transcriptStatus" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Transcript Status for <span id="studentNameTS"></span></h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{url_for('.update_transcript_status')}}" method="POST" class="needs-validation" novalidate>
+                    <input type="hidden" name="id" id="studentIdTS" value="">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="statusTS" class="form-label"> Status</label>
+                            <select id="statusTS" name="status" class="form-select" required>
+                                <option selected disabled value="">Select a status</option>
+                                <option value="Not Received">Not Received</option>
+                                <option value="Transcript Received">Transcript Received</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a status.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if session.userType in ['gs', 'sysadmin'] %}
+    <div class="modal fade" id="matriculateStudent" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Matriculate <span id="studentName"></span></h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{url_for('.matriculate')}}" method="POST" class="needs-validation" novalidate>
+                    <input type="hidden" name="studentId" id="studentId" value="">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="advisorId" class="form-label"> Advisor</label>
+                            <select class="form-select" name="advisorId" id="advisorId" required>
+                                <option selected disabled value="">Select an advisor</option>
+                                {% for advisor in advisors %}
+                                    <option value="{{advisor.id}}">{{advisor.first_name}} {{advisor.last_name}}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select an advisor.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gradSemester" class="form-label"> Expected Graduation Semester</label>
+                            <select class="form-select" name="gradSemester" id="gradSemester" required>
+                                <option selected disabled value="">Select a semester</option>
+                                <option value="Fall">Fall</option>
+                                <option value="Spring">Spring</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a semester.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gradYear" class="form-label"> Expected Graduation Year</label>
+                            <input type="number" min="2023" max="2100" step="1" required name="gradYear" id="gradYear" class="form-control">
+                            <div class="invalid-feedback">
+                                Please select a year.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Matriculate Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock content %}
+
+{% block extra_js %}
+    <script>
+        $(document).ready( function () {
+            $('#applicants').DataTable({
+                "language": {
+                    "emptyTable": "No applicants found.",
+                    "zeroRecords": "No matching applicants found."
+                },
+                order: [[2, 'asc'], [1, 'asc']],
+            });
+        } );
+    </script>
+    {% if (session['userType'] == 'faculty' and facultyType['admissions_chair']) or session['userType'] in ['sysadmin', 'gs'] %}
+    <script>
+        const transcriptStatusModal = new bootstrap.Modal('#transcriptStatus');
+
+        function transcriptStatus(studentId, studentName, status) {
+            $('#studentNameTS').text(studentName);
+            $('#studentIdTS').val(studentId);
+            $('#statusTS').val(status);
+            transcriptStatusModal.show();
+        }
+    </script>
+    {% endif %}
+    {% if session["userType"] in ["gs", "sysadmin"] %}
+    <script>
+        const matriculateModal = new bootstrap.Modal('#matriculateStudent');
+
+        function matriculateStudent(studentId, studentName) {
+            $('#studentName').text(studentName);
+            $('#studentId').val(studentId);
+            matriculateModal.show();
+        }
+    </script>
+    {% endif %}
+{% endblock extra_js %}

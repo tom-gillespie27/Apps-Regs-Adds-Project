@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+{% block content %}
+    <h2 class="pb-2">Students</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Students</li>
+        </ol>
+    </nav>
+    <div class="bg-light rounded p-2 mb-3">
+        <form method="GET" action="">
+            {% if session['userType'] != "faculty" %}
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by advisor</span>
+                <select class="form-select" name="advisorId" aria-label="Filter by advisor">
+                    <option value=""{% if not selectedAdvisor %} selected{% endif %}>All</option>
+                    {% for advisor in advisors %}
+                        <option value="{{advisor.id}}" {% if advisor.id == selectedAdvisor %}selected{% endif %}>{{advisor.first_name}} {{advisor.last_name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by degree</span>
+                <select class="form-select" name="degree" aria-label="Filter by degree">
+                    <option value=""{% if not request.args.get('degree') %} selected{% endif %}>All</option>
+                    <option value="masters"{% if request.args.get('degree') == 'masters' %} selected{% endif %}>Masters</option>
+                    <option value="phd"{% if request.args.get('degree') == 'phd' %} selected{% endif %}>PhD</option>
+                </select>
+            </div>
+            {% if years %}
+            <div class="input-group mb-2">
+                <span class="input-group-text">Filter by admit year</span>
+                <select class="form-select" name="year" aria-label="Filter by admit year">
+                    <option value=""{% if not request.args.get('year') %} selected{% endif %}>All</option>
+                    {% for year in years %}
+                        <option value="{{year.year}}"{% if request.args.get('year')|int == year.year|int %} selected{% endif %}>{{year.year}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle" id="students">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">University ID</th>
+                    <th scope="col">First Name</th>
+                    <th scope="col">Last Name</th>
+                    <th scope="col">Program</th>
+                    <th scope="col">Advising Hold</th>
+                    <th scope="col">Form1 Status</th>
+                    <th scope="col">Thesis Status</th>
+                    {% if session["userType"] in ["gs", "sysadmin"] %}
+                        <th scope="col">Advisor</th>
+                        <th scope="col" data-searchable="false">Graduation Status</th>
+                        <th scope="col">Expected Graduation</th>
+                    {% endif %}
+                    <th scope="col" data-orderable="false" data-searchable="false">Transcript</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                    <tr>
+                        <td>{{ '%08d' % student.user_id }}</td>
+                        <td>{{ student.first_name }}</td>
+                        <td>{{ student.last_name }}</td>
+                        <td>{% if student.program %}{{ programTypes[student.program] }}{% else %}(not yet set){% endif %}</td>
+                        <td class="table-{% if student.advising_form_approved %}success{% elif student.advising_form_submitted %}info{% else %}warning{% endif %}">
+                            {% if student.advising_form_approved %}
+                                Hold Lifted (Form Approved)<br /><a href="{{url_for('.advising_form_approve', studentId=student.user_id)}}" class="btn btn-link p-0">View form</a>
+                            {% elif student.advising_form_submitted %}
+                                Form submitted<br /><a href="{{url_for('.advising_form_approve', studentId=student.user_id)}}" class="btn btn-link p-0">Review and approve form</a>
+                            {% else %}
+                                Not submitted
+                            {% endif %}
+                        </td>
+                        <td class="table-{% if student.form_approved %}success{% elif student.form1_submitted %}info{% else %}warning{% endif %}">
+                            {% if student.form_approved %}Approved{% elif student.form1_submitted %}Form submitted<br /><a href="{{url_for('.form_review', studentId=student.user_id)}}" class="btn btn-link p-0">Review Form1</a>{% else %}Not submitted{% endif %}
+                        </td>
+                        {% if student.program == 'phd' %}
+                            <td class="table-{% if student.thesis_passed %}success{% else %}warning{% endif %}">
+                                {% if student.thesis_passed %}
+                                    Passed!
+                                {% elif session["userType"] in ["faculty", "sysadmin"] %}
+                                    Unapproved
+                                    <br />
+                                    <a href="{{url_for('.passThesis', studentId=student.user_id)}}" class="btn btn-link p-0">Pass Thesis</a>
+                                {% else %}
+                                    Unapproved
+                                {% endif %}
+                            </td>
+                        {% else %}
+                            <td>N/A</td>
+                        {% endif %}
+                        {% if session["userType"] in ["gs", "sysadmin"] %}
+                            <td>
+                                {% if student.advisor_id %}
+                                    {{ student.advisor_first_name }} {{ student.advisor_last_name }}
+                                    <br />
+                                {% endif %}
+                                <a href="javascript:updateAdvisor({{student.user_id}},'{{student.first_name}} {{student.last_name}}'{% if student.advisor_id %},{{student.advisor_id}}{% endif %})" class="btn btn-link p-0">{% if student.advisor_id %}Update{% else %}Set{% endif %} Advisor</a>
+                            </td>
+                            <td{% if student.grad_status == 'cleared' %} class="table-info"{% endif %}>
+                                {{ student.grad_status.capitalize() }}
+                                {% if student.grad_status == 'cleared' %}
+                                <br />
+                                <a href = "{{ url_for('.approve_grad', studentId=student.user_id) }}" class="btn btn-link p-0">Clear to Graduate</a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{student.grad_semester.capitalize()}} {{student.grad_year}}
+                                <br />
+                                <a href="javascript:updateGradStatus({{student.user_id}},'{{student.first_name}} {{student.last_name}}','{{student.grad_semester}}',{{student.grad_year}})" class="btn btn-link p-0">Update</a>
+                        {% endif %}
+                        <td>
+                            <a href="{{ url_for('ads.transcript.view', userId = student.user_id) }}" class="btn btn-link">View Transcript</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if session["userType"] in ["gs", "sysadmin"] %}
+        <div class="modal fade" id="updateAdvisor" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5">Update Advisor for <span id="studentName"></span></h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{{url_for('.advisor')}}" method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="studentId" id="studentId" value="">
+                        <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="advisorId" class="form-label"> Advisor</label>
+                                    <select class="form-select" name="advisorId" id="advisorId" required>
+                                        <option selected disabled value="">Select an advisor</option>
+                                        {% for advisor in advisors %}
+                                            <option value="{{advisor.id}}">{{advisor.first_name}} {{advisor.last_name}}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select an advisor.
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Update advisor</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="updateGradStatus" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5">Update Exepected Graduation Date for <span id="studentNameGrad"></span></h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{{url_for('.gradDate')}}" method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="studentId" id="studentIdGrad" value="">
+                        <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="semester" class="form-label">Semester</label>
+                                    <select class="form-select" name="semester" id="semester" required>
+                                        <option selected disabled value="">Select a semester</option>
+                                        <option value="fall">Fall</option>
+                                        <option value="spring">Spring</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select a semester.
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="year" class="form-label">Year</label>
+                                    <input type="number" min="2023" max="2100" step="1" required name="year" id="year" class="form-control">
+                                    <div class="invalid-feedback">
+                                        Please enter a valid year.
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Update graduation date</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock content %}
+
+{% block extra_js %}
+    <script>
+        $(document).ready( function () {
+            $('#students').DataTable({
+                "language": {
+                    "emptyTable": "No students found.",
+                    "zeroRecords": "No matching students found."
+                },
+                order: [[2, 'asc'], [1, 'asc']],
+            });
+        } );
+        {% if session["userType"] in ["gs", "sysadmin"] %}
+            const advisorModal = new bootstrap.Modal('#updateAdvisor');
+            const gradDateModal = new bootstrap.Modal('#updateGradStatus');
+
+            advisorModal.addEventListener('hidden.bs.modal', event => {
+                // clear the form
+                $('#studentId').val('');
+                $('#advisorId').val('');
+                $('#studentName').text('');
+            });
+            function updateAdvisor(studentId, studentName, advisorId = null) {
+                $('#studentName').text(studentName);
+                $('#studentId').val(studentId);
+                $('#advisorId').val(advisorId);
+                advisorModal.show();
+            }
+
+            gradDateModal.addEventListener('hidden.bs.modal', event => {
+                // clear the form
+                $('#studentName').text('');
+                $('#studentIdGrad').val('');
+                $('#semester').val('');
+                $('#year').val('');
+            });
+            function updateGradStatus(studentId, studentName, semester, year) {
+                $('#studentNameGrad').text(studentName);
+                $('#studentIdGrad').val(studentId);
+                $('#semester').val(semester);
+                $('#year').val(year);
+                gradDateModal.show();
+            }
+
+        {% endif %}
+    </script>
+{% endblock extra_js %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Course Catalog{% endblock %}
+{% block content %}
+    <h1>Course Catalog</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Course Catalog</li>
+        </ol>
+    </nav>
+    <p>Our page provides information on a variety of engineering courses offered by our institution. Here you will find details on each course's purpose, learning outcomes, prerequisites, and topics covered. Our diverse course offerings include everything from core engineering principles to cutting-edge topics in emerging technologies. Browse our catalog and find the perfect course to take your engineering skills to the next level.
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="flex-shrink-0 pt-2 bg-white sticky-top">
+                    <h3 class="border-bottom">Courses</h3>
+                    <ul class="list-unstyled ps-0">
+                        {% for row in dept %}
+                        <li class="mb-1">
+                            <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#{{row['department']}}-collapse" aria-expanded="false">
+                                {{row['department']}}
+                            </button>
+                            <div class="collapse" id="{{row['department']}}-collapse">
+                                <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                                    {% for row2 in course[row["department"]] %}
+                                        <li><a href='#{{row2["department"] ~ row2["course_num"]}}' class="link-dark rounded">{{row2["department"] ~ " " ~ row2["course_num"]}}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-10 pt-1">
+            {% for row in dept %}
+                <div class="container-fluid px-0 text-start d-flex flex-row align-items-center">
+                    {% set name = None %}
+
+                    {% if row["department"] == "CSCI" %}
+                        {% set name = "Computer Science" %}
+                    {% elif row["department"] == "ECE" %}
+                        {% set name = "Electrical and Computer Engineering" %}
+                    {% elif row["department"] == "MATH" %}
+                        {% set name = "Mathematics" %}
+                    {% endif %}
+
+                    <h2 class="me-3"><strong>{{name}}</strong></h2>
+                    <span class="fs-5 fw-semibold">({{row["department"]}})</span>
+                </div>
+                <div class="row row-cols-1 row-cols-md-3 g-4 mb-3">
+                {% for row2 in course[row["department"]] %}
+                    <div class="col">
+                        <div class="card" id="{{row2["department"] ~ row2["course_num"]}}">
+                            <div class="card-body">
+                                <h5 class="card-title">{{row2["title"]}} - {{row2["department"]}} {{row2["course_num"]}}</h5>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Credit Hours:</strong> {{row2['credits']}}</li>
+                                {% if row2['prereq']|length > 0 %}
+                                <li class="list-group-item">
+                                    <strong>Prerequisites:</strong>
+                                    {% for row3 in row2['prereq'] %}
+                                        <a href='#{{row3["department"] ~ row3["course_num"]}}'>{{row3['department'] ~ " " ~ row3['course_num']}}</a>{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endfor %}
+            </div>         
+        </div>
+    </div>
+{% endblock content %}

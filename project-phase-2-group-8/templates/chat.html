@@ -1,0 +1,42 @@
+{% macro message(name, message, self = False) -%}
+    <div class="w-100 mb-3{% if self %} float-end{% endif %}">
+        <span class="text-muted{% if self %} float-end{% endif %}">{{name}}</span>
+        <br />
+        <span class="text-break rounded-3 px-3 py-2 d-inline-block bg-{% if self %}primary-subtle float-end{% else %}secondary-subtle{% endif %}">{{message}}</span>
+    </div>
+{%- endmacro %}
+{% extends "base.html" %}
+{% block title %}Alumni Chat{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <h1>Alumni Chat</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Chat</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">Chat</div>
+                <div class="card-body">
+                    <div id="chat" class="overflow-auto d-flex flex-column-reverse" style="height: 400px;">
+                        {% for m in messages %}
+                            {{message(m.first_name + ' ' + m.last_name, m.message, m.user_id == session.userId)}}
+                        {% endfor %}
+                    </div>
+                    <form action="{{url_for('.send')}}" method="POST">
+                        <div class="input-group">
+                            <input type="text" name="message" class="form-control" placeholder="Message" required maxlength="255">
+                            <button type="submit" class="btn btn-primary">Send</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+</div>
+{% endblock content %}

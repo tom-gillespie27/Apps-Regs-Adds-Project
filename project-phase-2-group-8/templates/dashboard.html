@@ -1,0 +1,274 @@
+{% macro dashboardCard(title, description, btnLink, btnText, bg = None, icon = None) -%}
+    <div class="card{% if bg %} {{bg}}{% endif %} h-100 shadow-sm">
+        <div class="card-body">
+            {% if icon %}
+                <i class="fa-sharp fa-3x fa-solid fa-{{icon}} float-end ps-2 pb-2 text-muted"></i>
+            {% endif %}
+            <h5 class="card-title">{{title}}</h5>
+            <p class="card-text">{{description}}</p>
+        </div>
+        <div class="card-footer bg-body mx-auto w-100 border-0">
+            <a href="{{btnLink}}" class="mt-auto icon-link">{{btnText}} <i class="fa-sharp fa-solid fa-arrow-right"></i></a>
+        </div>
+    </div>
+{%- endmacro %}
+
+{% extends "base.html" %}
+{% block title %} Student Home {% endblock %}
+
+{% block content %}
+    
+<div class="container">
+    <div class="row">
+        <h1>Welcome, {{user.first_name}}!</h1>
+        <p>
+            University ID: {{'%08d' % session.userId}}
+            {% if session.userType == 'alum' %}
+                <br>
+                Program: {{programTypes[alum_info.program]}}
+                <br>
+                Graduation year: {{alum_info.grad_year}}
+            {% endif %}
+        </p>
+    </div>
+    {% if session.userType == 'applicant' and appStatus and appSubmitted %}
+    
+    <div class="row justify-content-md-center mb-4">
+        <div class="col">
+            <div class="card bg-{% if appStatus in ['Admit', 'Admit With Aid'] %}success-subtle{% else %}info-subtle{% endif %} h-100" id="appStatus">
+                <div class="card-body">
+                    <i class="fa-sharp fa-3x fa-solid fa-clipboard-list float-end ps-2 pb-2 text-muted"></i>
+                    <h5 class="card-title">Application Status</h5>
+                    <p class="card-text">
+                        
+                        {% if appStatus == 'Incomplete' %}
+                            Your application is incomplete. We are waiting for the following materials:
+                        {% elif appStatus in ['Complete', 'Under Review'] %}
+                            Your application and materials have been received. We are reviewing your application and will get back to you with your decision soon.
+                        {% elif appStatus in ['Admit', 'Admit With Aid'] %}
+                            Congratulations, you have been admitted. The formal letter of acceptance will be mailed.
+                        {% elif appStatus == 'Reject' %}
+                            Your application for admission has been denied.
+                        {% elif appStatus == 'Accepted' %}
+                            You accepted your offer of admission. We look forward to seeing you soon!
+                        {% endif %}
+                    </p>
+                    {% if appStatus == 'Incomplete' and materialsNeeded %} 
+                    <ul>
+                        {% for material in materialsNeeded %}
+                            <li>
+                                {{material}}
+                                {% if material == 'Transcript' %}
+
+                                <form action="{{url_for('apps.uploadTranscript')}}" method="POST" enctype="multipart/form-data">
+                                    <label for="file">Upload your transcript :</label>
+                                    <input type="file" id="file" name="file" class="form-control mb-3" style="width: 300px">
+                                    <div class="btn-group mb-3">
+                                        <button type="submit" class="btn btn-outline-dark">Upload</button>
+                                        <a href="{{ url_for('apps.mail_transcript') }}" class="btn btn-outline-primary"><i class="fa-sharp fa-solid fa-envelope"></i> I will be mailing my transcript</a>
+                                    </div>
+                                    
+                                </form>
+                                
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if appStatus in ['Admit', 'Admit With Aid'] %}
+                        <a href="{{url_for('apps.acceptApp')}}" class="btn btn-outline-dark" id="acceptBtn">Accept offer <i class="fa-solid fa-arrow-right"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if session.userType == 'student' and not advising_form_approved and not advising_form %}
+        <!-- Student has not filled out an advising form yet -->
+        <div class="row justify-content-md-center mb-4">
+            <div class="col">
+                <div class="card text-bg-warning">
+                    <div class="card-body">
+                        <i class="fa-sharp fa-3x fa-solid fa-triangle-exclamation float-end ps-2 pb-2"></i>
+                        <h5 class="card-title">Remove your advising hold</h5>
+                        <p class="card-text">
+                            You have not yet submitted an advising form. Please do so as soon as possible to get your advising hold lifted and register for classes.
+                        </p>
+                        <a href="{{url_for('ads.students.advising_form')}}" class="btn btn-outline-dark">Fill out advising form <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    {% if session.userType == 'student' and not advising_form_approved and advising_form %}
+        <!-- Student has not had their advising form approvd -->
+        <div class="row justify-content-md-center mb-4">
+            <div class="col">
+                <div class="card text-bg-info">
+                    <div class="card-body">
+                        <i class="fa-sharp fa-3x fa-solid fa-triangle-exclamation float-end ps-2 pb-2"></i>
+                        <h5 class="card-title">Advising Hold</h5>
+                        <p class="card-text">
+                            Your advisor is reviewing your advising form. Once they approve it, your advising hold will be lifted. You will be able to register for classes once your advising hold is lifted.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    {% if session.userType == 'student' and able_to_graduate and advising_form_approved %}
+        <div class="row justify-content-md-center mb-4">
+            <div class="col">
+                <div class="card text-bg-success">
+                    <div class="card-body">
+                        <i class="fa-sharp fa-3x fa-solid fa-graduation-cap float-end ps-2 pb-2 text-light"></i>
+                        <h5 class="card-title">Apply to Graduate!</h5>
+                        <p class="card-text">
+                            It's time to apply to graduate! Click the button below to apply to graduate from your program.
+                        </p>
+                        <a href="{{url_for('ads.graduation_apply')}}" class="btn btn-outline-light">Apply to Graduate <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    <div class="row justify-content-md-center row-cols-1 row-cols-md-3 g-4">
+        {% if session.userType == 'student' and advising_form_approved %}
+        <div class="col">
+            {{dashboardCard('Register for Classes', 'Search for classes and register for them.', url_for('regs.register', id=session.userId), 'Register', icon='calendar-plus')}}
+        </div>
+        {% endif %}
+        {% if session.userType == 'student' or (session.userType == 'faculty' and faculty.is_instructor) %}
+        <div class="col">
+            {{dashboardCard('Course Catalog', 'View all courses to plan your schedule.', url_for('regs.catalog'), 'View course catalog', icon='book-open')}}
+        </div>
+        {% endif %}
+        {% if session.userType == 'registrar' %}
+        <div class="col">
+            {{dashboardCard('Schedule of Classes', 'Edit the schedule of classes for the current semester.', url_for('regs.schedule'), 'Edit schedule', icon='calendar')}}
+        </div>
+        {% endif %}
+        {% if session.userType in ['student', 'alum'] %}
+        <div class="col">
+            {{dashboardCard('Transcript', 'View your GPA and academic status, and break down your academic history by semester.', url_for('ads.transcript.view'), 'View Transcript', icon='file-certificate')}}
+        </div>
+        {% endif %}
+        {% if session.userType == 'alum' %}
+        <div class="col">
+            {{dashboardCard('Chat', 'Chat with other alumni', url_for('chat.index'), 'View chat', icon='comments')}}
+        </div>
+        {% endif %}
+        {% if session.userType == 'student' and advising_form_approved %}
+        <div class="col">
+            {% if form1 %}
+                {{dashboardCard('Form1', 'View your current plan of study and revise it if your advisor has not yet approved your Form1.', url_for('ads.students.form_review', studentId = session.userId), 'View Form1', icon = 'clipboard-list-check')}}
+            {% else %}
+                {{dashboardCard('Form1', 'Submit your plan of study to your advisor to review and approve.', url_for('ads.view_form1'), 'Submit Form1', icon = 'clipboard-list-check')}}
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if session.userType == 'applicant' and not appSubmitted %}
+        <div class="col">
+            {{dashboardCard('Apply', 'Apply to the university', url_for('apps.applicationFillout'), 'Apply now', icon='file-plus')}}
+        </div>
+        {% endif %}
+        {% if session.userType == 'applicant' and appSubmitted and appStatus in ['Incomplete', 'Complete'] %}
+        <div class="col">
+            {{dashboardCard('Edit Application', 'Edit your application to the university', url_for('apps.applicationEdit', university_id=session.userId), 'Edit application', icon='file-edit')}}
+        </div>
+        {% endif %}
+        {% if session.userType == 'faculty' and faculty.is_advisor %}
+        <div class="col">
+            {{dashboardCard('Advisees', 'View the students you advise and their transcripts', url_for('ads.students.index'), 'View advisees', icon='users')}}
+        </div>
+        {% endif %}
+        {% if session.userType in ['sysadmin', 'gs'] %}
+        <div class="col">
+            {{dashboardCard('Manage Alumni', 'View all alumni', url_for('reports.alumni'), 'View alumni', icon='user-graduate')}}
+        </div>
+        {% endif %}
+        {% if session.userType in ['sysadmin', 'gs'] %}
+        <div class="col">
+            {{dashboardCard('Manage Students', 'View all active students', url_for('ads.students.index'), 'View students', icon='screen-users')}}
+        </div>
+        {% endif %}
+        {% if session.userType == 'sysadmin' %}
+        <div class="col">
+            {{dashboardCard('Manage Users', 'View all active users', url_for('ads.users.index'), 'View users', icon='users-gear')}}
+        </div>
+        {% endif %}
+        {% if session.userType == 'faculty' and faculty.is_instructor %}
+        <div class="col">
+            {{dashboardCard('View/enter grades', 'View and submit grades for the students you teach.', url_for('regs.update_grade'), 'Grade', icon='pencil-alt')}}
+        </div>
+        {% endif %}
+        {% if session.userType in ['gs', 'sysadmin', 'registrar'] %}
+        <div class="col">
+            {{dashboardCard('View/Enter grades', 'View and submit grades for all current students.', url_for('regs.update_grade'), 'Grade', icon='pencil-alt')}}
+        </div>
+        {% endif %}
+        {% if session.userType in ['sysadmin', 'gs'] or (session.userType == 'faculty' and (faculty.is_advisor or faculty.is_reviewer or faculty.is_admissions_chair)) %}
+        <div class="col">
+            {{dashboardCard('Applicants', 'View all applicants', url_for('apps.applicants'), 'View applicants', icon='user-check')}}
+        </div>
+        {% endif %}
+        <div class="col">
+            {{dashboardCard('Personal Info', 'Edit your personal and contact information to make sure we can reach you.', url_for('ads.personal_info'), 'View and edit personal info', icon='user-edit')}}
+        </div>
+        {% if session.userType in ['sysadmin', 'gs', 'faculty'] %}
+        <div class="col">
+            {{dashboardCard('Queries/Reports', '', url_for('reports.index'), 'Run reports', icon='magnifying-glass')}}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+    {% if appStatus in ['Admit', 'Admit With Aid', 'Accepted'] %}
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+        {% if appStatus in ['Admit', 'Admit With Aid'] %}
+        var acceptBtn = document.getElementById("acceptBtn")
+        var acceptBtnDim = acceptBtn.getBoundingClientRect();
+
+        function acceptOfferClick(event) {
+            // Prevent default link behavior
+            event.preventDefault();
+
+            // Generate confetti
+            confetti({
+                particleCount: 100,
+                startVelocity: 30,
+                spread: 360,
+                origin: {
+                    x: (acceptBtnDim.left + acceptBtnDim.width/2) / window.innerWidth,
+                    y: (acceptBtnDim.top + acceptBtnDim.height/2) / window.innerHeight
+                }
+            });
+
+            // Wait 1 second (1000 milliseconds)
+            setTimeout(() => {
+                // Redirect to link URL
+                window.location.href = acceptBtn.href;
+            }, 1000);
+        }
+
+        // Add click event listener to link
+        acceptBtn.addEventListener('click', acceptOfferClick);
+        {% endif %}
+        var appStatusCard = document.getElementById("appStatus")
+        var appStatusCardDim = appStatusCard.getBoundingClientRect();
+
+        confetti({
+            particleCount: 100,
+            startVelocity: 30,
+            spread: 360,
+            origin: {
+                x: (appStatusCardDim.left + appStatusCardDim.width/2) / window.innerWidth,
+                y: (appStatusCardDim.top + appStatusCardDim.height/2) / window.innerHeight
+            }
+        });
+    </script>
+    {% endif %}
+{% endblock extra_js %}

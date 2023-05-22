@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %} Personal Information {% endblock %}
+
+{% block content %}
+<div class="pt-4">
+    <h2>Personal Information</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Personal Information</li>
+        </ol>
+    </nav>
+
+</div>
+
+
+<div class="mb-3">
+<!--First and Last Names, should not be editable-->
+    <div class="form-group">
+        <div class="row">
+            <div class="col">
+                <label for="firstname">First Name</label>
+                <input type="text" class="form-control" disabled="disabled" value="{{user.first_name}}">
+            </div>  
+            <div class="col">
+                <label for="lastname">Last Name</label>
+                <input type="text" class="form-control" disabled="disabled" value="{{user.last_name}}">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Email, should be editable.-->
+<div class="mb-3">
+    <div class="form-group">
+        <div class="row">
+            <form method="POST" class="needs-validation" novalidate>
+                <div class="col">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{user.email}}" placeholder="Enter Email..." required>
+                </div>
+                <div class="col">
+                    <div class="pt-4">
+                        <input type="Submit" class="btn btn-primary" value="Update"></input>
+                    </div>
+                 </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!--Address, should be editable.-->
+<div class="mb-3">
+    <div class="form-group">
+        <label for="s-id">University ID</label>
+        <input type="text" class="form-control" disabled="disabled" value="{{'%08d' % user.id}}">
+    </div>
+</div>
+<div class="mb-3">
+    <form method="POST" class="needs-validation" novalidate>
+        <div class="row">
+            <div class="col">
+                <br>
+                <div class="mb-3">
+                    <h5>Address</h5>
+                </div>
+                <label for="streetaddr">Street Address</label>
+                <input type="text" class="form-control" id="streetaddr" name="streetaddr" value="{{user.street_address}}" required>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label for="city">City</label>
+                <input type="text" class="form-control" id="city" name="city" value="{{user.city}}" required>
+            </div>
+            <div class="col">
+                <label for="state">State</label>
+                <input type="text" class="form-control" id="state" name="state" value="{{user.state}}" minlength="2" maxlength="2" pattern="[A-Z]*" required>
+            </div>
+            <div class="col">
+                <label for="zip">Zip Code</label>
+                <input type="tel" class="form-control" id="zip" name="zip" value="{{user.zip}}" maxlength="5" pattern="[0-9]*" required>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label for="bday">Birthday</label>
+                <input type="date" class="form-control" id="bday" name="bday" value="{{user.bday}}" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+</div>  
+
+
+
+<!--Additional information for grad students-->
+
+{% if user.type == "student" %}
+<div class="row">
+    <h5>Student Information</h5>
+    <div class="col">
+        <label for="deg-prog">Program</label>
+        <input type="text" class="form-control" disabled="disabled" value="{{programTypes[student.program]}}">
+    </div>
+    <div class="col">
+        <label for="fadv">Faculty Advisor</label>
+        <input type="text" class="form-control" disabled="disabled" value="{{advisor.first_name}} {{advisor.last_name}}">
+    </div>
+</div>
+
+{% endif %}
+
+
+
+{% endblock content %}
+
+{% block extra_js %}
+
+{% endblock extra_js %}

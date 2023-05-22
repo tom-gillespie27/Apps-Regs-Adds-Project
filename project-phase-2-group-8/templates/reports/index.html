@@ -1,0 +1,119 @@
+{% macro reportCard(title, description, btnLink, btnText, bg = None, icon = None, modal = False) -%}
+    <div class="card{% if bg %} {{bg}}{% endif %} h-100 shadow-sm">
+        <div class="card-body">
+            {% if icon %}
+                <i class="fa-sharp fa-3x fa-solid fa-{{icon}} float-end ps-2 pb-2 text-muted"></i>
+            {% endif %}
+            <h5 class="card-title">{{title}}</h5>
+            <p class="card-text">{{description}}</p>
+        </div>
+        <div class="card-footer bg-body mx-auto w-100 border-0">
+            {% if modal %}
+            <button type="button" class="btn btn-outline-primary mt-auto" data-bs-toggle="modal" data-bs-target="{{btnLink}}">{{btnText}}</button>
+            {% else %}
+            <a href="{{btnLink}}" class="btn btn-outline-primary mt-auto">{{btnText}}</a>
+            {% endif %}
+        </div>
+    </div>
+{%- endmacro %}
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <h1>Reports</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Reports</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% if session.userType in ['gs', 'sysadmin'] or (session.userType == 'faculty' and facultyType['reviewer']) %}
+        <div class="col">
+            {{reportCard('Applicant Search', 'Search for applicants by last name or student ID number.', url_for('apps.applicants'), 'Search for an applicant', icon='user-magnifying-glass')}}
+        </div>
+        <div class="col">
+            {{reportCard('Applicants by Degree/Status/Admit Date', 'Filter applicants by degree and/or status and/or admit date.', url_for('apps.applicants'), 'Filter applicants', icon='filters')}}
+        </div>
+        {% endif %}
+        {% if session.userType in ['gs', 'sysadmin'] %}
+        <div class="col">
+            {{reportCard('Applicant Statistics', 'Generate statistics for applicants by semester/year/degree program.', url_for('.applicantStats'), 'View statistics', icon='chart-user')}}
+        </div>
+        <div class="col">
+            {{reportCard('Students by Degree/Admit Year', 'Filter students by degree and/or admit year.', url_for('ads.students.index'), 'Search for students', icon='users')}}
+        </div>
+        <div class="col">
+            {{reportCard('Students by Advisor', 'See a faculty advisor\'s advisees.', '#studentAdvisor', 'Search for advisees', icon='screen-users', modal=True)}}
+        </div>
+        <div class="modal fade" id="studentAdvisor" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5">Students by Advisor</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{{url_for('ads.students.index')}}" method="GET" class="needs-validation" novalidate>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="advisorId" class="form-label">Select an advisor</label>
+                                <select class="form-select" name="advisorId" aria-label="Filter by advisor" required>
+                                    <option value="" selected disabled>Select an advisor</option>
+                                    {% for advisor in advisors %}
+                                        <option value="{{advisor.user_id}}">{{advisor.first_name}} {{advisor.last_name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">View advisees</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if session.userType in ['gs', 'sysadmin'] %}
+        <div class="col">
+            {{reportCard('Graduating Students', 'Get a list of graduating students by semester, year, or degree program.', url_for('.graduating_students'), 'Search for graduating students', icon='user-graduate')}}
+        </div>
+        <div class="col">
+            {{reportCard('Alumni', 'Get a list of alumni by semester, year, or degree program.', url_for('.alumni'), 'Search for alumni', icon='graduation-cap')}}
+        </div>
+        {% endif %}
+        <div class="col">
+            {{reportCard('Student Transcript', 'Get a student\'s transcript given their student ID.', '#studentTranscript', 'Search for a transcript', icon='file-certificate', modal=True)}}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="studentTranscript" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5">Search for a student's transcript</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{url_for('.transcript')}}" method="POST" class="needs-validation" novalidate>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="studentId" class="form-label">Student ID</label>
+                        <input type="text" class="form-control" name="studentId" id="studentId" required minlength="8" pattern="\d{8,}">
+                        <div class="invalid-feedback">
+                            Please enter an 8 digit student ID.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">View transcript</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

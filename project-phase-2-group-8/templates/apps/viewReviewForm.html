@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% block title %}View Review Form{% endblock %}
+{% block content %}
+    <h2 class="pb-2">View Review Form</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('apps.applicants')}}">Applicants</a></li>
+            <li class="breadcrumb-item" aria-current="page">{{student.first_name}} {{student.last_name}}</li>
+            <li class="breadcrumb-item active" aria-current="page">Review Forms</li>
+        </ol>
+    </nav>
+    <div class="btn-group mb-3" role="group">
+        <a href="{{url_for('.viewApplication', university_id=studentId)}}" class="btn btn-outline-primary"><i class="fa-sharp fa-solid fa-file-lines"></i> View Application</a>
+        {% if session.userType in ['gs', 'sysadmin'] or (session.userType == 'faculty' and facultyType['is_admissions_chair']) %}
+        <a href="{{url_for('.applicationEdit', university_id=studentId)}}" class="btn btn-outline-primary"><i class="fa-sharp fa-solid fa-file-pen"></i> Edit Application</a>
+        {% endif %}
+    </div>
+
+    {% if forms|length > 0 %}
+    <div class="row mt-3">
+        <h3>Average Review Ratings</h3>
+        <div class="col">
+            <div class="card text-bg-light text-center">
+                <div class="card-header">Recommender 1</div>
+                <div class="card-body">
+                    <h3 class="card-title mb-0">{{averages.r1|default('-')|round(2) if averages.r1 is not none else '-'}}</h3>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Credible: {{credible.r1|int}}/{{forms|length}}</li>
+                    <li class="list-group-item">Generic: {{generic.r1|int}}/{{forms|length}}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-bg-light text-center">
+                <div class="card-header">Recommender 2</div>
+                <div class="card-body">
+                    <h3 class="card-title mb-0">{{averages.r2|default('-')|round(2) if averages.r2 is not none else '-'}}</h3>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Credible: {{credible.r2|int}}/{{forms|length}}</li>
+                    <li class="list-group-item">Generic: {{generic.r2|int}}/{{forms|length}}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-bg-light text-center">
+                <div class="card-header">Recommender 3</div>
+                <div class="card-body">
+                    <h3 class="card-title mb-0">{{averages.r3|default('-')|round(2) if averages.r3 is not none else '-'}}</h3>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Credible: {{credible.r3|int}}/{{forms|length}}</li>
+                    <li class="list-group-item">Generic: {{generic.r3|int}}/{{forms|length}}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="accordion mt-3" id="reviewForms">
+        {% for form in forms %}
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Review{{form.reviewer}}" aria-expanded="true" aria-controls="Review{{form.reviewer}}"">
+                {{form.first_name}} {{form.last_name}}
+                </button>
+            </h2>
+            <div id="Review{{form.reviewer}}" class="accordion-collapse collapse" data-bs-parent="#reviewForms">
+                <div class="accordion-body">
+                    <div class="mb-3">
+                        <label>Student ID</label>
+                        <input type="text" class="form-control" name="studentID" disabled value="{{'%08d' % form.university_id}}">
+                    </div>
+                    <div class="mb-3">
+                        <label>Semester Applied</label>
+                        <select class="form-select" disabled>
+                            <option value="" disabled>Select a semester to apply for</option>
+                            <option value="Fall 2023"{% if form.semesterApplied == 'Fall 2023' %} selected{% endif %}>Fall 2023</option>
+                            <option value="Spring 2024"{% if form.semesterApplied == 'Spring 2024' %} selected{% endif %}>Spring 2024</option>
+                        </select>
+                    </div>
+                    <h3>Recommendation Letters Rating (Worst=1, Best =5)</h3>
+                    <div class="row mb-3 align-items-center">
+                        <div class="col">
+                            <label>R1 Rating</label>
+                            <input type="range" class="form-range" min="1" max="5" step="1" disabled value="{{form.r1rating}}">
+                            <label class="float-start text-muted">1</label>
+                            <label class="float-end text-muted">5</label>
+                        </div>
+                        <div class="col">
+                            <label>R1 Generic?</label>
+                            <br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r1generic" id="r1genericY" value="1" disabled{% if form.r1generic == '1' %} checked{% endif %}>
+                                <label class="form-check-label" for="r1genericY">Yes</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r1generic" id="r1genericN" value="0" disabled{% if form.r1generic == '0' %} checked{% endif %}>
+                                <label class="form-check-label" for="r1genericN">No</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label>R1 Credible?</label>
+                            <br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r1credible" id="r1credibleY" value="1" disabled{% if form.r1credible == '1' %} checked{% endif %}>
+                                <label class="form-check-label" for="r1credibleY">Yes</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r1credible" id="r1credibleN" value="0" disabled{% if form.r1credible == '0' %} checked{% endif %}>
+                                <label class="form-check-label" for="r1credibleN">No</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label>R1 From</label>
+                            <input type="text" class="form-control" name="r1from" disabled value="{{form.r1from}}">
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <div class="col">
+                            <label>R2 Rating</label>
+                            <input type="range" class="form-range" min="1" max="5" step="1" disabled value="{{form.r2rating}}">
+                            <label class="float-start text-muted">1</label>
+                            <label class="float-end text-muted">5</label>
+                        </div>
+                        <div class="col">
+                            <label>R2 Generic?</label>
+                            <br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r2generic" id="r2genericY" value="1" disabled{% if form.r2generic == '1' %} checked{% endif %}>
+                                <label class="form-check-label" for="r2genericY">Yes</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r2generic" id="r2genericN" value="0" disabled{% if form.r2generic == '0' %} checked{% endif %}>
+                                <label class="form-check-label" for="r2genericN">No</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label>R2 Credible?</label>
+                            <br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r2credible" id="r2credibleY" value="1" disabled{% if form.r2credible == '1' %} checked{% endif %}>
+                                <label class="form-check-label" for="r2credibleY">Yes</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r2credible" id="r2credibleN" value="0" disabled{% if form.r2credible == '0' %} checked{% endif %}>
+                                <label class="form-check-label" for="r2credibleN">No</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label>R2 From</label>
+                            <input type="text" class="form-control" name="r2from" disabled value="{{form.r2from}}">
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <div class="col">
+                            <label>R3 Rating</label>
+                            <input type="range" class="form-range" min="1" max="5" step="1" disabled value="{{form.r3rating}}">
+                            <label class="float-start text-muted">1</label>
+                            <label class="float-end text-muted">5</label>
+                        </div>
+                        <div class="col">
+                            <label>R3 Generic?</label>
+                            <br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r3generic" id="r3genericY" value="1" disabled{% if form.r3generic == '1' %} checked{% endif %}>
+                                <label class="form-check-label" for="r3genericY">Yes</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r3generic" id="r3genericN" value="0" disabled{% if form.r3generic == '0' %} checked{% endif %}>
+                                <label class="form-check-label" for="r3genericN">No</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label>R3 Credible?</label>
+                            <br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r3credible" id="r3credibleY" value="1" disabled {% if form.r3credible == '1' %} checked{% endif %}>
+                                <label class="form-check-label" for="r3credibleY">Yes</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="r3credible" id="r3credibleN" value="0" disabled{% if form.r3credible == '0' %} checked{% endif %}>
+                                <label class="form-check-label" for="r3credibleN">No</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label>R3 From</label>
+                            <input type="text" class="form-control" name="r3from" disabled value="{{form.r3from}}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Grad Admissions Committee (GAS) Review Rating</label>
+                        <select name="GASrating" class="form-control" required disabled>
+                            <option value="" disabled>Select a rating</option>
+                            <option value="Reject"{% if form.GASrating == 'Reject' %} selected{% endif %}>Reject</option>
+                            <option value="Borderline Admit"{% if form.GASrating == 'Borderline Admit' %} selected{% endif %}>Borderline Admit</option>
+                            <option value="Admit Without Aid"{% if form.GASrating == 'Admit Without Aid' %} selected{% endif %}>Admit without Aid</option>
+                            <option value="Admit With Aid"{% if form.GASrating == 'Admit With Aid' %} selected{% endif %}>Admit with Aid</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Deficiency Courses (if any)</label>
+                        <input type="text" name="deficiencies" class="form-control" disabled value="{{form.deficiencies}}">
+                    </div>
+                    <div class="mb-3">
+                        <label>Reasons for Reject</label>
+                        <br />
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rejectReason" id="rejectReasonA" value="A" disabled{% if form.rejectReason == 'A' %} checked{% endif %}>
+                            <label class="form-check-label" for="rejectReasonA">Incomplete Record</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rejectReason" id="rejectReasonB" value="B" disabled{% if form.rejectReason == 'B' %} checked{% endif %}>
+                            <label class="form-check-label" for="rejectReasonB">Does not meet minimum requirements</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rejectReason" id="rejectReasonC" value="C" disabled{% if form.rejectReason == 'C' %} checked{% endif %}>
+                            <label class="form-check-label" for="rejectReasonC">Problems with Letters</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rejectReason" id="rejectReasonD" value="D" disabled{% if form.rejectReason == 'D' %} checked{% endif %}>
+                            <label class="form-check-label" for="rejectReasonD">Not competitive</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rejectReason" id="rejectReasonE" value="E" disabled{% if form.rejectReason == 'E' %} checked{% endif %}>
+                            <label class="form-check-label" for="rejectReasonE">Other reasons</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Comments</label>
+                        <textarea class="form-control" name="thoughts" rows="3" disabled>{{form.thoughts}}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% if forms|length == 0 %}
+        <div class="alert alert-info" role="alert">
+            No application reviews found.
+        </div>
+        {% endif %}
+    </div>
+
+    {% if appStatus not in ['Admit', 'Admit With Aid', 'Reject', 'Accepted', 'Matriculated'] and session.userType not in ['gs'] %}
+    <a href="{{url_for('.fillReviewForm', university_id = studentId)}}" class="btn btn-outline-primary mt-3">Fillout review form</a>
+    {% endif %}
+
+    {% if (session.userType in ['gs', 'sysadmin'] or (session.userType == 'faculty' and facultyType['is_admissions_chair'])) and appStatus not in ['Admit', 'Admit With Aid', 'Reject', 'Accepted', 'Matriculated'] %}
+    <h3 class="mt-5">Final Decision</h3>
+    <form action="{{url_for('.submitFinalDecision')}}" method="POST" class="needs-validation" novalidate>
+        <input type="hidden" class="form-control" name="studentID" value="{{studentId}}">
+        <div class="mb-3">
+            <label>Recommended Advisor</label>
+            <select class="form-select" name="advisorId" required>
+                <option selected disabled value="">Select an advisor</option>
+                {% for advisor in advisors %}
+                    <option value="{{advisor.id}}">{{advisor.first_name}} {{advisor.last_name}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Final Decision</label>
+            <br />
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="decision" id="decisionAwA" value="Admit With Aid" required>
+                <label class="form-check-label" for="decisionAwA">Admit With Aid</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="decision" id="decisionA" value="Admit" required>
+                <label class="form-check-label" for="decisionA">Admit</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="decision" id="decisionR" value="Reject" required>
+                <label class="form-check-label" for="decisionR">Reject</label>
+            </div>
+        </div>
+        <input type="hidden" name="final_decision" value="1">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    {% endif %}
+
+{% endblock content %}

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Schedule of Classes{% endblock %}
+{% block content %}
+    <h2 class="pt-2 pb-2">Schedule of Classes</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Schedule of Classes</li>
+        </ol>
+    </nav>
+    <div class="accordion" id="accordionExample">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+              <h4>Search for a Class</h4>
+            </button>
+          </h2>
+          <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <div class="container"> 
+                    <div class="search-filter">
+                        <form action="{{url_for('regs.schedule')}}" class="needs-validation" method="GET" novalidate>
+                            <h5 class="pb-2">Search by...</h5>
+                                <div class="form-group mb-3">
+                                    <!-- Department -->
+                                    <label for="dname">Department</label>
+                                    <select class="form-control" id="dname" name="dname">
+                                        <option value="">All</option>
+                                        {% for department in dept %}
+                                            <option value="{{department.department}}"{% if request.args.get('dname') == department.department %} selected{% endif %}>{{department.department}}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please provide a department.
+                                    </div>
+                                    <!-- Course number -->
+                                    <label for="cnum">Course Number</label>
+                                    <input class="form-control" type="text" id="cnum" placeholder="Course Number" name="cnum" maxlength="50" minlength="1"{% if request.args.get('cnum') %} value="{{request.args.get('cnum')}}"{% endif %}>
+                                    <div class="invalid-feedback">
+                                        Please provide a course number.
+                                    </div>
+                                    <!-- Course title -->
+                                    <label for="ctitle">Course Title</label>
+                                    <input class="form-control" type="text" id="ctitle" placeholder="Course Title" name="ctitle" maxlength="50" minlength="1"{% if request.args.get('ctitle') %} value="{{request.args.get('ctitle')}}"{% endif %}>
+                                    <div class="invalid-feedback">
+                                        Please provide a course title.
+                                    </div>
+                                </div>
+                            <div class="form-group mb-3">
+                                <button class="btn btn-md btn-primary">Search<i class="bi bi-search"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingTwo">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+              <h4>Add a Class</h4>
+            </button>
+          </h2>
+          <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <div class="container">
+                    <form class="add-class needs-validation" action="{{url_for('regs.add_course')}}" method = "POST" novalidate>
+                        <div class="row">
+                            <div class="col">
+                                <h5 class="pb-2">Course Information</h5>
+                                <div class="form-group mb-3">
+                                    <!-- Department -->
+                                    <label for="department">Department</label>
+                                    <select class="form-control" id="department" name="department">
+                                        <option value="" selected disabled hidden>Choose here</option>
+                                    {% for department in dept %}
+                                        <option value="{{department.department}}"{% if request.args.get('department') == department.department %} selected{% endif %}>{{department.department}}</option>
+                                    {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please provide a department.
+                                    </div>
+                                    <!-- Course Title-->
+                                    <label for="course">Course Title</label>
+                                    <input class="form-control" type="text" id="course" placeholder="Course Title" name="course" maxlength="50" minlength="1" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a course.
+                                    </div>
+                                    <!-- Course Number -->
+                                    <label for="course_num">Course Number</label>
+                                    <input class="form-control" type="text" id="course_num" placeholder="Course Number" name="course_num" maxlength="4" minlength="1" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a course number.
+                                    </div>
+                                    <!-- Credits -->
+                                    <label for="credits">Credits</label>
+                                    <select class="form-control" id="credits" name="credits" required>
+                                        <option value="" selected disabled hidden>Choose here</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>   
+                                    <div class="invalid-feedback">
+                                        Please provide a number of credits.
+                                    </div>
+                                    <!-- Required Master's -->
+                                    <label for="req_masters">Required for Master's</label>
+                                    <select class="form-control" id="req_masters" name="req_masters" required>
+                                        <option value="" selected disabled hidden>Choose here</option>
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>    
+                            </div>
+
+                            <div class="col">
+                                <h5 class="pb-2">Section Information</h5>
+                                <div class="form-group mb-3">
+                                    <!-- Section instructor -->
+                                    <label for="fid">Instructor ID</label>
+                                    <input class="form-control" type="number" id="fid" placeholder="Instructor" name="fid" maxlength="8" minlength="1" required>
+                                    <div class="invalid-feedback">
+                                        Please provide an instructor.
+                                    </div>
+                                    <!-- Section day -->
+                                    <label for="day_of_week">Day of Week</label>
+                                    <select class="form-control" id="day_of_week" name="day_of_week" required>
+                                        <option value="" selected disabled hidden>Choose here</option>
+                                        <option value="M">Monday</option>
+                                        <option value="T">Tuesday</option>
+                                        <option value="W">Wednesday</option>
+                                        <option value="R">Thursday</option>
+                                        <option value="F">Friday</option>
+                                    </select>
+                                    <!-- Section time -->
+                                    <label for="time">Time</label>
+                                    <input class="form-control" type="text" id="time" placeholder="15:30-18:00" name="time" maxlength="50" minlength="1" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a time.
+                                    </div>
+                                    <!-- Section room -->
+                                    <label for="room">Room</label>
+                                    <input class="form-control" type="text" id="room" placeholder="Room" name="room" maxlength="50" minlength="1" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a room.
+                                    </div>
+                                    <!-- Section capacity -->
+                                    <label for="capacity">Room Capacity</label>
+                                    <input class="form-control" type="number" id="capacity" placeholder="Capacity" name="room_capacity" maxlength="3" minlength="1" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a capacity.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group mb-3">
+                                <button class="btn btn-md btn-primary">Create New Class Section</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div> 
+    </div>     
+    <br>
+    {% for semester in semesters %}
+        <div class="card mb-5">
+            <h5 class="card-header">
+                {{ semester.csem|capitalize }} {{ semester.cyear }}
+            </h5>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Department</th>
+                                <th scope="col">Course</th>
+                                <th scope="col">Title</th>
+                                <th scope="col">Instructor</th>
+                                <th scope="col">Day</th>
+                                <th scope="col">Time</th>
+                                <th scope="col">Credits</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in classes %}
+                                <tr>
+                                    <td>{{ course.department }}</td>
+                                    <td>{{ course.course_num }}</td>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.first_name}} {{ course.last_name }}</td>
+                                    <td>{{ course.day_of_week }}</td>
+                                    <td>{{ course.class_time }}</td>
+                                    <td>{{ course.credits }}</td>
+                                    <th scope="col">
+                                        <form action="{{ url_for('regs.remove_course') }}" method="POST">
+                                            <input type="hidden" name="course_id" value="{{course.course_id}}">
+                                            <input type="hidden" name="semester" value="{{semester.csem}}">
+                                            <input type="hidden" name="year" value="{{semester.cyear}}">
+                                            <button type="submit" class="btn btn-md btn-primary">Remove</button>
+                                        </form>
+                                    </th>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card mb-5">
+            <h5 class="card-header">
+                {{ curr_semester|capitalize }} {{ curr_year }}
+            </h5>
+            <div class="card-body">
+                <p class="card-text">No classes have been found.</p>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock content %}
